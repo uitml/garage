@@ -10,6 +10,7 @@ class VecEnvExecutor:
         self._observation_space = envs[0].observation_space
         self.ts = np.zeros(len(self.envs), dtype='int')
         self.max_path_length = max_path_length
+        self.lives = None
 
     def step(self, action_n):
         all_results = [env.step(a) for (a, env) in zip(action_n, self.envs)]
@@ -17,6 +18,16 @@ class VecEnvExecutor:
             map(list, list(zip(*all_results))))
         dones = np.asarray(dones)
         rewards = np.asarray(rewards)
+
+        if "ale.lives" in env_infos[0]:
+            if self.lives is None:
+                self.lives = [env_infos[0]["ale.lives"]] * len(obs)
+            else:
+                for i in range(len(self.lives)):
+                    if self.lives[i] > env_infos[i]["ale.lives"]:
+                        rewards[i] = -1
+                        self.lives[i] = env_infos[i]["ale.lives"]
+
         self.ts += 1
         if self.max_path_length is not None:
             dones[self.ts >= self.max_path_length] = True

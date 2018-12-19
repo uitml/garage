@@ -32,6 +32,11 @@ class Box(Space):
             assert np.isscalar(low) and np.isscalar(high)
             self.low = low + np.zeros(shape)
             self.high = high + np.zeros(shape)
+        if dtype is None:
+            if (high == 255).all():
+                self._dtype = np.uint8
+            else:
+                self._dtype = np.float32
 
         if (self.low == 0).all() and (
                 self.high == 255).all() and dtype != np.uint8:

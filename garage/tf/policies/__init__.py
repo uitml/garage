@@ -10,6 +10,7 @@ from garage.tf.policies.discrete_qf_derived_policy import (
 from garage.tf.policies.gaussian_gru_policy import GaussianGRUPolicy
 from garage.tf.policies.gaussian_lstm_policy import GaussianLSTMPolicy
 from garage.tf.policies.gaussian_mlp_policy import GaussianMLPPolicy
+from garage.tf.policies.greedy_policy import GreedyPolicy
 
 __all__ = [
     "Policy", "StochasticPolicy", "CategoricalGRUPolicy",

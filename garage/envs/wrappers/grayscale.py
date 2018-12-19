@@ -43,6 +43,7 @@ class Grayscale(gym.Wrapper):
 
         _low = env.observation_space.low.flatten()[0]
         _high = env.observation_space.high.flatten()[0]
+
         assert _low == 0
         assert _high == 255
         self._observation_space = Box(

@@ -31,7 +31,7 @@ class DiscreteMLPQFunction(QFunction):
                  output_nonlinearity=None,
                  layer_norm=False):
         self._env_spec = env_spec
-        self._action_dim = env_spec.action_space.flat_dim
+        self._action_dim = env_spec.action_space.n
         self._hidden_sizes = hidden_sizes
         self._hidden_nonlinearity = hidden_nonlinearity
         self._output_nonlinearity = output_nonlinearity
@@ -51,11 +51,16 @@ class DiscreteMLPQFunction(QFunction):
     @overrides
     def build_net(self, name):
         """
-        Set up q network based on class attributes.
+        Build the q-network.
 
         Args:
-            name: Network variable scope.
-            input: Input tf.placeholder to the network.
+            name: scope of the network.
+            input: input Tensor of the network.
+            dueling: use dueling network or not.
+            layer_norm: Boolean for layer normalization.
+
+        Return:
+            The tf.Tensor of Discrete DiscreteMLPQFunction.
         """
         obs_ph = self._build_ph(name)
 

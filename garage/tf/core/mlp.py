@@ -52,6 +52,7 @@ def mlp(input_var,
             if layer_normalization:
                 l_hid = tf.contrib.layers.layer_norm(l_hid)
 
+        l_out = l_hid
         l_out = tf.layers.dense(
             inputs=l_hid,
             units=output_dim,

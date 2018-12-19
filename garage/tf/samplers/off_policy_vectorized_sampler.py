@@ -93,6 +93,7 @@ class OffPolicyVectorizedSampler(BatchSampler):
                     input_obses)
 
             next_obses, rewards, dones, env_infos = self.vec_env.step(actions)
+
             agent_infos = tensor_utils.split_tensor_dict_list(agent_infos)
             env_infos = tensor_utils.split_tensor_dict_list(env_infos)
             if agent_infos is None:

@@ -1,5 +1,5 @@
 """CNN model in TensorFlow."""
-
+import numpy as np
 import tensorflow as tf
 
 
@@ -55,8 +55,9 @@ def cnn(input_var,
                 h = hidden_nonlinearity(h)
 
         # convert conv to dense
-        dim = tf.reduce_prod(h.get_shape()[1:].as_list())
-        h = tf.reshape(h, [-1, dim.eval()])
+        # dim = tf.reduce_prod(h.get_shape()[1:].as_list())
+        dim = np.prod(h.get_shape()[1:].as_list())
+        h = tf.reshape(h, [-1, dim])
         h = tf.layers.dense(
             inputs=h,
             units=output_dim,
@@ -127,9 +128,10 @@ def cnn_with_max_pooling(input_var,
             h = tf.nn.max_pool(
                 h, ksize=pool_shapes, strides=pool_strides, padding=padding)
 
-        # convert conv to densevfxz
-        dim = tf.reduce_prod(h.get_shape()[1:].as_list())
-        h = tf.reshape(h, [-1, dim.eval()])
+        # convert conv to dense
+        # dim = tf.reduce_prod(h.get_shape()[1:].as_list())
+        dim = np.prod(h.get_shape()[1:].as_list())
+        h = tf.reshape(h, [-1, dim])
         h = tf.layers.dense(
             inputs=h,
             units=output_dim,

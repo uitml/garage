@@ -1,6 +1,10 @@
 from garage.tf.algos.batch_polopt import BatchPolopt
 from garage.tf.algos.ddpg import DDPG
+<<<<<<< HEAD
 from garage.tf.algos.erwr import ERWR
+=======
+from garage.tf.algos.dqn import DQN
+>>>>>>> DQN
 from garage.tf.algos.npo import NPO
 from garage.tf.algos.off_policy_rl_algorithm import OffPolicyRLAlgorithm
 from garage.tf.algos.ppo import PPO
@@ -20,4 +24,5 @@ __all__ = [
     "TNPG",
     "TRPO",
     "VPG",
+    "DQN"
 ]
