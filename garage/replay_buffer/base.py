@@ -44,7 +44,6 @@ class ReplayBuffer(metaclass=abc.ABCMeta):
         episode_buffer = self._convert_episode_to_batch_major()
         rollout_batch_size = len(episode_buffer["observation"])
         idx = self._get_storage_idx(rollout_batch_size)
-
         for key in self._buffer.keys():
             self._buffer[key][idx] = episode_buffer[key]
         self._n_transitions_stored += self._time_horizon * rollout_batch_size

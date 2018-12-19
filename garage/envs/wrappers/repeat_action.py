@@ -22,6 +22,8 @@ class RepeatAction(gym.Wrapper):
         """gym.Env step."""
         for i in range(self._n_frame_to_repeat):
             obs, reward, done, info = self.env.step(action)
+            if done:
+                return obs, reward, done, info
         return obs, reward, done, info
 
     def reset(self):
