@@ -51,7 +51,7 @@ class TestBenchmarkHER(unittest.TestCase):
         mujoco1m = benchmarks.get_benchmark("HerDdpg")
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
-        benchmark_dir = "./benchmark_her/%s/" % timestamp
+        benchmark_dir = "./data/local/benchmark_her/%s/" % timestamp
         for task in mujoco1m["tasks"]:
             env_id = task["env_id"]
             env = gym.make(env_id)

@@ -1,5 +1,6 @@
 import pickle
 
+import gym
 import numpy as np
 
 from tests.quirks import KNOWN_GYM_RENDER_NOT_IMPLEMENTED
@@ -97,3 +98,26 @@ def max_pooling(_input, pool_shape, pool_stride):
                                pool_shape, k])
 
     return results
+
+
+class AutoStopEnv(gym.Wrapper):
+    """A env wrapper that stops rollout at step 100."""
+
+    def __init__(self, env=None, env_name=""):
+        if env_name:
+            super().__init__(gym.make(env_name))
+        else:
+            super().__init__(env)
+        self._rollout_step = 0
+        self._max_path_length = 100
+
+    def step(self, actions):
+        self._rollout_step += 1
+        next_obs, reward, done, info = self.env.step(actions)
+        if self._rollout_step == self._max_path_length:
+            done = True
+            self._rollout_step = 0
+        return next_obs, reward, done, info
+
+    def reset(self, **kwargs):
+        return self.env.reset(**kwargs)

@@ -65,7 +65,7 @@ class TestBenchmarkDDPG(unittest.TestCase):
         mujoco1m = benchmarks.get_benchmark("Mujoco1M")
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
-        benchmark_dir = "./benchmark_ddpg/%s/" % timestamp
+        benchmark_dir = "./data/local/benchmark_ddpg/%s/" % timestamp
 
         for task in mujoco1m["tasks"]:
             env_id = task["env_id"]

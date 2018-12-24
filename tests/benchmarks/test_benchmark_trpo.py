@@ -13,7 +13,6 @@ import unittest
 
 from baselines import logger as baselines_logger
 from baselines.bench import benchmarks
-from baselines.common.cmd_util import make_mujoco_env
 from baselines.common.tf_util import _PLACEHOLDER_CACHE
 from baselines.ppo1.mlp_policy import MlpPolicy
 from baselines.trpo_mpi import trpo_mpi
@@ -29,6 +28,7 @@ from garage.tf.algos import TRPO
 from garage.tf.baselines import GaussianMLPBaseline
 from garage.tf.envs import TfEnv
 from garage.tf.policies import GaussianMLPPolicy
+from tests.helpers import AutoStopEnv
 
 
 class TestBenchmarkPPO(unittest.TestCase):
@@ -42,10 +42,11 @@ class TestBenchmarkPPO(unittest.TestCase):
         mujoco1m = benchmarks.get_benchmark("Mujoco1M")
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
-        benchmark_dir = "./benchmark_trpo/%s/" % timestamp
+        benchmark_dir = "./data/local/benchmark_trpo/%s/" % timestamp
         for task in mujoco1m["tasks"]:
             env_id = task["env_id"]
             env = gym.make(env_id)
+            baseline_env = AutoStopEnv(env_name=env_id)
             seeds = random.sample(range(100), task["trials"])
 
             task_dir = osp.join(benchmark_dir, env_id)
@@ -63,7 +64,9 @@ class TestBenchmarkPPO(unittest.TestCase):
                 garage_dir = trail_dir + "/garage"
                 baselines_dir = trail_dir + "/baselines"
 
-                baselines_csv = run_baselines(env_id, seed, baselines_dir)
+                baseline_env.reset()
+                baselines_csv = run_baselines(baseline_env, seed,
+                                              baselines_dir)
 
                 # Run garage algorithms
                 env.reset()
@@ -143,11 +146,12 @@ def run_garage(env, seed, log_dir):
         algo.train()
 
         garage_logger.remove_tabular_output(tabular_log_file)
+        garage_logger.reset()
 
         return tabular_log_file
 
 
-def run_baselines(env_id, seed, log_dir):
+def run_baselines(env, seed, log_dir):
     """
     Create baselines model and training.
 
@@ -170,7 +174,7 @@ def run_baselines(env_id, seed, log_dir):
                 hid_size=32,
                 num_hid_layers=2)
 
-        env = make_mujoco_env(env_id, seed)
+        # env = make_mujoco_env(env_id, seed)
         trpo_mpi.learn(
             env,
             policy_fn,
