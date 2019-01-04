@@ -29,7 +29,7 @@ class BatchSampler(BaseSampler):
     def shutdown_worker(self):
         parallel_sampler.terminate_task(scope=self.algo.scope)
 
-    def obtain_samples(self, itr):
+    def obtain_samples(self, itr, sess=None):
         cur_policy_params = self.algo.policy.get_param_values()
         paths = parallel_sampler.sample_paths(
             policy_params=cur_policy_params,
@@ -58,9 +58,9 @@ class BatchSampler(BaseSampler):
 
         for idx, path in enumerate(paths):
             path_baselines = np.append(all_path_baselines[idx], 0)
-            deltas = path["rewards"] \
-                + self.algo.discount * path_baselines[1:] \
-                - path_baselines[:-1]
+            deltas = path["rewards"] + \
+                self.algo.discount * path_baselines[1:] - \
+                path_baselines[:-1]
             path["advantages"] = special.discount_cumsum(
                 deltas, self.algo.discount * self.algo.gae_lambda)
             path["deltas"] = deltas
