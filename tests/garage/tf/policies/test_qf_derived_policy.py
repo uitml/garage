@@ -38,3 +38,4 @@ class TestQfDerivedPolicy(TfGraphTestCase):
         actions = self.policy.get_actions([obs])
         for action in actions:
             assert self.env.action_space.contains(action)
+
