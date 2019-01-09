@@ -58,7 +58,7 @@ class OffPolicyVectorizedSampler(BatchSampler):
         self.vec_env.close()
 
     @overrides
-    def obtain_samples(self, itr, sess=None):
+    def obtain_samples(self, itr):
         """
         Collect samples for the given iteration number.
 

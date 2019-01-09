@@ -61,7 +61,7 @@ class OUStrategy(ExplorationStrategy):
             self.action_dim)
 
     @overrides
-    def get_action(self, t, observation, policy, sess=None, **kwargs):
+    def get_action(self, t, observation, policy, **kwargs):
         """Return an action with noise.
 
         Args:
