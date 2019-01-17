@@ -33,20 +33,20 @@ def run_task(*_):
 
     policy = ContinuousMLPPolicy(
         env_spec=env.spec,
-        hidden_sizes=[64, 64],
+        hidden_sizes=[400, 300],
         hidden_nonlinearity=tf.nn.relu,
         output_nonlinearity=tf.nn.tanh)
 
     qf = ContinuousMLPQFunction(
         name="ContinuousMLPQFunction",
         env_spec=env.spec,
-        hidden_sizes=[64, 64],
+        hidden_sizes=[400, 300],
         hidden_nonlinearity=tf.nn.relu)
 
     qf2 = ContinuousMLPQFunction(
         name="ContinuousMLPQFunction2",
         env_spec=env.spec,
-        hidden_sizes=[64, 64],
+        hidden_sizes=[400, 300],
         hidden_nonlinearity=tf.nn.relu)
 
     replay_buffer = SimpleReplayBuffer(
@@ -64,9 +64,11 @@ def run_task(*_):
         target_update_tau=1e-2,
         n_epochs=500,
         n_epoch_cycles=20,
-        max_path_length=100,
+        max_path_length=1000,
         n_train_steps=50,
-        discount=0.9,
+        smooth_return=False,
+        discount=0.99,
+        buffer_batch_size=100,
         min_buffer_size=int(1e4),
         exploration_strategy=action_noise,
         policy_optimizer=tf.train.AdamOptimizer,

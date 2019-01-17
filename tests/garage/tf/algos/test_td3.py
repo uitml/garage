@@ -56,8 +56,10 @@ class TestTD3(TfGraphTestCase):
             n_epoch_cycles=20,
             max_path_length=100,
             n_train_steps=50,
-            discount=0.9,
+            discount=0.99,
+            smooth_return=False,
             min_buffer_size=int(1e4),
+            buffer_batch_size=100,
             exploration_strategy=action_noise,
             policy_optimizer=tf.train.AdamOptimizer,
             qf_optimizer=tf.train.AdamOptimizer)
