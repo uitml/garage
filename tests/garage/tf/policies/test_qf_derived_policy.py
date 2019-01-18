@@ -3,6 +3,7 @@ import tensorflow as tf
 
 from garage.tf.envs import TfEnv
 from garage.tf.policies import DiscreteQfDerivedPolicy
+from garage.tf.q_functions import DiscreteMLPQFunction
 from tests.fixtures import TfGraphTestCase
 from tests.fixtures.envs.dummy import DummyDiscreteEnv
 

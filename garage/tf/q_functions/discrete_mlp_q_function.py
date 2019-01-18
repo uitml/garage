@@ -61,6 +61,18 @@ class DiscreteMLPQFunction:
 
         self.model.build(obs_ph)
 
+        with tf.name_scope(name):
+            self.q_val, self.obs_ph = self.build_net(name)
+
+    def _build_ph(self, scope):
+
+        obs_dim = self._env_spec.observation_space.shape
+
+        with tf.name_scope(scope):
+            obs_ph = tf.placeholder(tf.float32, (None, ) + obs_dim, name="obs")
+
+        return obs_ph
+
     @overrides
     def get_qval_sym(self, state_input, name):
         """
