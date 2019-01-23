@@ -13,7 +13,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow.contrib as tc
 
-import garage.misc.logger as logger
+from garage.logger import logger, snapshotter, tabular
 from garage.misc.overrides import overrides
 from garage.tf.algos.off_policy_rl_algorithm import OffPolicyRLAlgorithm
 from garage.tf.misc import tensor_utils
@@ -198,30 +198,30 @@ class DDPG(OffPolicyRLAlgorithm):
             logger.log("Training finished")
             logger.log("Saving snapshot #{}".format(int(epoch)))
             params = self.get_itr_snapshot(epoch, paths)
-            logger.save_itr_params(epoch, params)
+            snapshotter.save_itr_params(epoch, params)
             logger.log("Saved")
             if self.evaluate:
-                logger.record_tabular('Epoch', epoch)
-                logger.record_tabular('AverageReturn',
+                tabular.record('Epoch', epoch)
+                tabular.record('AverageReturn',
                                       np.mean(self.episode_rewards))
-                logger.record_tabular('StdReturn',
+                tabular.record('StdReturn',
                                       np.std(self.episode_rewards))
-                logger.record_tabular('Policy/AveragePolicyLoss',
+                tabular.record('Policy/AveragePolicyLoss',
                                       np.mean(self.episode_policy_losses))
-                logger.record_tabular('QFunction/AverageQFunctionLoss',
+                tabular.record('QFunction/AverageQFunctionLoss',
                                       np.mean(self.episode_qf_losses))
-                logger.record_tabular('QFunction/AverageQ',
+                tabular.record('QFunction/AverageQ',
                                       np.mean(self.epoch_qs))
-                logger.record_tabular('QFunction/MaxQ', np.max(self.epoch_qs))
-                logger.record_tabular('QFunction/AverageAbsQ',
+                tabular.record('QFunction/MaxQ', np.max(self.epoch_qs))
+                tabular.record('QFunction/AverageAbsQ',
                                       np.mean(np.abs(self.epoch_qs)))
-                logger.record_tabular('QFunction/AverageY',
+                tabular.record('QFunction/AverageY',
                                       np.mean(self.epoch_ys))
-                logger.record_tabular('QFunction/MaxY', np.max(self.epoch_ys))
-                logger.record_tabular('QFunction/AverageAbsY',
+                tabular.record('QFunction/MaxY', np.max(self.epoch_ys))
+                tabular.record('QFunction/AverageAbsY',
                                       np.mean(np.abs(self.epoch_ys)))
                 if self.input_include_goal:
-                    logger.record_tabular('AverageSuccessRate',
+                    tabular.record('AverageSuccessRate',
                                           np.mean(self.success_history))
 
             if not self.smooth_return:
@@ -231,6 +231,7 @@ class DDPG(OffPolicyRLAlgorithm):
                 self.epoch_ys = []
                 self.epoch_qs = []
 
+            logger.log(tabular, with_prefix=False)
             if self.plot:
                 self.plotter.update_plot(self.policy, self.max_path_length)
                 if self.pause_for_plot:

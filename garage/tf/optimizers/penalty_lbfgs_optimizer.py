@@ -3,7 +3,8 @@ import scipy.optimize
 import tensorflow as tf
 
 from garage.core import Serializable
-from garage.misc import ext, logger
+from garage.logger import logger
+from garage.misc import ext
 from garage.tf.misc import tensor_utils
 
 

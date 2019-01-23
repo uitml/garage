@@ -2,9 +2,8 @@ import numpy as np
 import tensorflow as tf
 
 from garage.core import Serializable
-from garage.misc import ext
-from garage.misc import krylov
-from garage.misc import logger
+from garage.logger import logger
+from garage.misc import ext, krylov
 from garage.misc.ext import sliced_fun
 from garage.tf.misc import tensor_utils
 

@@ -2,10 +2,9 @@ import pickle
 
 import numpy as np
 
+from garage.logger import logger
 from garage.misc import ext
-from garage.misc import logger
-from garage.sampler.stateful_pool import SharedGlobal
-from garage.sampler.stateful_pool import singleton_pool
+from garage.sampler.stateful_pool import SharedGlobal, singleton_pool
 from garage.sampler.utils import rollout
 
 

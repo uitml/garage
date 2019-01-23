@@ -11,8 +11,7 @@ import os.path as osp
 import random
 import unittest
 
-from baselines import bench
-from baselines import logger as baselines_logger
+from baselines import bench, logger as baselines_logger
 from baselines.bench import benchmarks
 from baselines.common import set_global_seeds
 from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
@@ -27,8 +26,8 @@ import tensorflow as tf
 
 from garage.envs import normalize
 from garage.experiment import LocalRunner
+from garage.logger import CsvOutput, logger as garage_logger, TensorBoardOutput
 from garage.misc import ext
-from garage.misc import logger as garage_logger
 from garage.tf.algos import PPO
 from garage.tf.baselines import GaussianMLPBaseline
 from garage.tf.envs import TfEnv
@@ -145,17 +144,17 @@ def run_garage(env, seed, log_dir):
                 plot=False,
             )
 
-            # Set up logger since we are not using run_experiment
-            tabular_log_file = osp.join(log_dir, "progress.csv")
-            garage_logger.add_tabular_output(tabular_log_file)
-            garage_logger.set_tensorboard_dir(log_dir)
+        # Set up logger since we are not using run_experiment
+        tabular_log_file = osp.join(log_dir, "progress.csv")
+        garage_logger.add_output(CsvOutput(tabular_log_file))
+        garage_logger.add_output(TensorBoardOutput(log_dir))
 
-            runner.setup(algo, env)
-            runner.train(n_epochs=488, batch_size=2048)
+        runner.setup(algo, env)
+        runner.train(n_epochs=488, batch_size=2048)
 
-            garage_logger.remove_tabular_output(tabular_log_file)
+        garage_logger.remove_all()
 
-            return tabular_log_file
+        return tabular_log_file
 
 
 def run_baselines(env, seed, log_dir):
