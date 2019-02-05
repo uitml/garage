@@ -40,9 +40,10 @@ class DiscreteCNNQFunction(QFunction):
                  pool_shape=(2, 2),
                  hidden_nonlinearity=tf.nn.relu,
                  output_nonlinearity=None):
-        super(DiscreteCNNQFunction, self).__init__()
+        super().__init__()
 
         self.name = name
+        self._env_spec = env_spec
         self._action_dim = env_spec.action_space.n
         self._filter_dims = filter_dims
         self._hidden_nonlinearity = hidden_nonlinearity
@@ -53,14 +54,22 @@ class DiscreteCNNQFunction(QFunction):
         self._max_pooling = max_pooling
         self._pool_shape = pool_shape
 
+        self.obs_ph = self._build_ph()
+        self.q_val = self.build_net(name, self.obs_ph)
+
+    def _build_ph(self):
+        obs_dim = self._env_spec.observation_space.shape
+        obs_ph = tf.placeholder(tf.float32, (None, ) + obs_dim, name="obs")
+        return obs_ph
+
     @overrides
-    def build_net(self, name, input, dueling=False, layer_norm=False):
+    def build_net(self, name, input_var, dueling=False, layer_norm=False):
         """
         Build the q-network.
 
         Args:
             name: scope of the network.
-            input: input Tensor of the network.
+            input_var: input Tensor of the network.
             dueling: use dueling network or not.
             layer_norm: Boolean for layer normalization.
 
@@ -69,7 +78,7 @@ class DiscreteCNNQFunction(QFunction):
         """
         if self._max_pooling:
             network = cnn_with_max_pooling(
-                input_var=input,
+                input_var=input_var,
                 output_dim=512,
                 filter_dims=self._filter_dims,
                 hidden_nonlinearity=self._hidden_nonlinearity,
@@ -82,7 +91,7 @@ class DiscreteCNNQFunction(QFunction):
                 name=name)
         else:
             network = cnn(
-                input_var=input,
+                input_var=input_var,
                 output_dim=512,
                 filter_dims=self._filter_dims,
                 hidden_nonlinearity=self._hidden_nonlinearity,
@@ -92,7 +101,7 @@ class DiscreteCNNQFunction(QFunction):
                 padding=self._padding,
                 name=name)
 
-        return super().q_func(
+        return self.q_func(
             input_network=network,
             output_dim=self._action_dim,
             hidden_sizes=[256],

@@ -39,12 +39,12 @@ class EpsilonGreedyStrategy(ExplorationStrategy):
         self._min_epsilon = min_epsilon
         self._decay_period = int(total_step * decay_ratio)
         self._action_space = env_spec.action_space
-        self.reset()
+        self._epsilon = self._max_epsilon
 
     @overrides
     def reset(self):
         """Reset the state of the exploration."""
-        self._epsilon = self._max_epsilon
+        pass
 
     @overrides
     def get_action(self, t, observation, policy, **kwargs):
@@ -64,12 +64,12 @@ class EpsilonGreedyStrategy(ExplorationStrategy):
             self._epsilon -= (
                 self._max_epsilon - self._min_epsilon) / self._decay_period
 
-        opt_action = policy.get_action(observation)
+        opt_action, agent_info = policy.get_action(observation)
 
         if np.random.random() < self._epsilon:
             opt_action = self._action_space.sample()
 
-        return opt_action
+        return opt_action, agent_info
 
     @overrides
     def get_actions(self, t, observations, policy, **kwargs):
@@ -89,9 +89,9 @@ class EpsilonGreedyStrategy(ExplorationStrategy):
             self._epsilon -= (
                 self._max_epsilon - self._min_epsilon) / self._decay_period
 
-        opt_actions = policy.get_actions(observations)
+        opt_actions, agent_infos = policy.get_actions(observations)
         for itr in range(len(opt_actions)):
             if np.random.random() < self._epsilon:
                 opt_actions[itr] = self._action_space.sample()
 
-        return opt_actions
+        return opt_actions, agent_infos
