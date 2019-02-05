@@ -51,32 +51,28 @@ class DQN(OffPolicyRLAlgorithm):
 
         # build q networks
         with tf.name_scope(self.name, "DQN"):
-            self.obs_t_ph = tf.placeholder(
-                tf.float32, (None, ) + obs_dim, name="obs")
             self.action_t_ph = tf.placeholder(tf.int32, None, name="action")
             self.reward_t_ph = tf.placeholder(tf.float32, None, name="reward")
             self.done_t_ph = tf.placeholder(tf.float32, None, name="done")
             self.next_obs_t_ph = tf.placeholder(
                 tf.float32, (None, ) + obs_dim, name="next_obs")
 
-            self.q_val = self.qf.build_net(
-                name="qf", input=self.obs_t_ph, dueling=self.dueling)
-
-            self.target_q_val = self.qf.build_net(
+            self.target_qval = self.qf.build_net(
                 name="target_qf",
-                input=self.next_obs_t_ph,
+                input_var=self.next_obs_t_ph,
                 dueling=self.dueling)
 
             self._qf_update_ops = get_target_ops(
-                self.qf.get_global_vars("qf"),
+                self.qf.get_global_vars(),
                 self.qf.get_global_vars("target_qf"))
 
             # Q-value of the selected action
             q_selected = tf.reduce_sum(
-                self.q_val * tf.one_hot(self.action_t_ph, action_dim), axis=1)
+                self.qf.q_val * tf.one_hot(self.action_t_ph, action_dim),
+                axis=1)
 
             # Bellman RHS, calculated from target network
-            future_best_q_val = tf.reduce_max(self.target_q_val, axis=1)
+            future_best_q_val = tf.reduce_max(self.target_qval, axis=1)
 
             q_best_masked = (1.0 - self.done_t_ph) * future_best_q_val
             # if done, it's just reward
@@ -109,10 +105,6 @@ class DQN(OffPolicyRLAlgorithm):
         self.start_worker(self.sess)
 
         self.sess.run(self._qf_update_ops, feed_dict=dict())
-
-        # Share the qf with the policy
-        self.policy._init_qf(lambda x: self.sess.run(
-            self.q_val, feed_dict={self.obs_t_ph: x}))
 
         episode_rewards = []
         episode_qf_losses = []
@@ -177,7 +169,7 @@ class DQN(OffPolicyRLAlgorithm):
         loss, _ = self.sess.run(
             [self._loss, self._optimize_loss],
             feed_dict={
-                self.obs_t_ph: observations,
+                self.qf.obs_ph: observations,
                 self.action_t_ph: actions,
                 self.reward_t_ph: rewards,
                 self.done_t_ph: dones,
@@ -190,6 +182,8 @@ class DQN(OffPolicyRLAlgorithm):
 def get_target_ops(variables, target_variables):
     """Get target network update operations."""
     init_ops = []
+    import pdb
+    pdb.set_trace()
     assert len(variables) == len(target_variables)
     for var, target_var in zip(variables, target_variables):
         # hard update

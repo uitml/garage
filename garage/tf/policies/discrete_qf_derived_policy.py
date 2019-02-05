@@ -52,7 +52,7 @@ class DiscreteQfDerivedPolicy(Policy, Serializable):
             self._qf.q_val, feed_dict={self._qf.obs_ph: [observation]})
         opt_action = np.argmax(q_vals)
 
-        return opt_action
+        return opt_action, dict()
 
     @overrides
     def get_actions(self, observations):
@@ -72,4 +72,4 @@ class DiscreteQfDerivedPolicy(Policy, Serializable):
             self._qf.q_val, feed_dict={self._qf.obs_ph: observations})
         opt_actions = np.argmax(q_vals, axis=1)
 
-        return opt_actions
+        return opt_actions, dict()
