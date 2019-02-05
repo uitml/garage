@@ -25,10 +25,11 @@ def run_task(*_):
 
     replay_buffer = SimpleReplayBuffer(
         env_spec=env.spec,
-        size_in_transitions=int(50000),
+        size_in_transitions=int(20000),
         time_horizon=max_path_length)
 
-    qf = DiscreteMLPQFunction(env_spec=env.spec, hidden_sizes=(64, 64))
+    qf = DiscreteMLPQFunction(
+        env_spec=env.spec, hidden_sizes=(64, 64), dueling=False)
 
     policy = DiscreteQfDerivedPolicy(env_spec=env, qf=qf)
 
@@ -50,11 +51,10 @@ def run_task(*_):
         qf_lr=1e-3,
         discount=1.0,
         min_buffer_size=1e3,
-        n_train_steps=50,
+        n_train_steps=20,
         smooth_return=False,
-        target_network_update_freq=2,
-        buffer_batch_size=32,
-        dueling=True)
+        target_network_update_freq=5,
+        buffer_batch_size=32)
 
     algo.train()
 

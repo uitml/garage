@@ -22,14 +22,12 @@ class DQN(OffPolicyRLAlgorithm):
                  qf_optimizer=tf.train.AdamOptimizer,
                  discount=1.0,
                  name=None,
-                 dueling=False,
                  target_network_update_freq=5,
                  **kwargs):
         self.qf_lr = qf_lr
         self.qf_optimizer = qf_optimizer
         self.name = name
         self.target_network_update_freq = target_network_update_freq
-        self.dueling = dueling
 
         super().__init__(
             env=env,
@@ -58,9 +56,7 @@ class DQN(OffPolicyRLAlgorithm):
                 tf.float32, (None, ) + obs_dim, name="next_obs")
 
             self.target_qval = self.qf.build_net(
-                name="target_qf",
-                input_var=self.next_obs_t_ph,
-                dueling=self.dueling)
+                name="target_qf", input_var=self.next_obs_t_ph)
 
             self._qf_update_ops = get_target_ops(
                 self.qf.get_global_vars(),
@@ -182,8 +178,6 @@ class DQN(OffPolicyRLAlgorithm):
 def get_target_ops(variables, target_variables):
     """Get target network update operations."""
     init_ops = []
-    import pdb
-    pdb.set_trace()
     assert len(variables) == len(target_variables)
     for var, target_var in zip(variables, target_variables):
         # hard update
