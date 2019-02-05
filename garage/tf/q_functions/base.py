@@ -1,7 +1,6 @@
 import tensorflow as tf
 
 from garage.tf.core import Parameterized
-from garage.tf.core.mlp import mlp
 
 
 class QFunction(Parameterized):
