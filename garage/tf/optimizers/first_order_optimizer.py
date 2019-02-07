@@ -136,8 +136,8 @@ class FirstOrderOptimizer(Serializable):
                 elapsed = time.time() - start_time
                 callback_args = dict(
                     loss=new_loss,
-                    params=self._target.get_param_values(trainable=True)
-                    if self._target else None,
+                    params=self._target.get_param_values(
+                        trainable=True) if self._target else None,
                     itr=epoch,
                     elapsed=elapsed,
                 )
