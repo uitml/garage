@@ -87,6 +87,8 @@ class TestBenchmarkPPO(unittest.TestCase):
                 plt_file=plt_file,
                 env_id=env_id)
 
+            env.close()
+
     test_benchmark_trpo.huge = True
 
 

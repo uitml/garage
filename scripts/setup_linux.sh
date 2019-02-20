@@ -2,9 +2,9 @@
 # This script installs garage on Linux distributions.
 #
 # NOTICE: To keep consistency across this script, scripts/setup_macos.sh and
-# docker/Dockerfile.ci, if there's any changes applied to this file, specially
-# regarding the installation of dependencies, apply those same changes to the
-# mentioned files.
+# docker/Dockerfile.base, if there's any changes applied to this file,
+# specially regarding the installation of dependencies, apply those same
+# changes to the mentioned files.
 
 # Exit if any error occurs
 set -e
@@ -43,7 +43,7 @@ print_help ()
   printf 'Usage: %s [--mjkey <arg>] [--(no-)modify-bashrc] ' "$0"
   printf '[--(no-)gpu] [-h|--help]\n'
   printf '\t%s\n' "--mjkey: Path of the MuJoCo key (no default)"
-  printf '\t%s' "--gpu,--no-gpu: Install GPU support of Tensorflow and Theano "
+  printf '\t%s' "--gpu,--no-gpu: Install GPU support of Tensorflow "
   printf '%s\n' "(off by default)"
   printf '\t%s' "--modify-bashrc,--no-modify-bashrc: Set environment variables "
   printf '%s\n' "required by garage in .bashrc (off by default)"
@@ -169,14 +169,25 @@ if [[ "${_arg_modify_bashrc}" = on ]]; then
   echo -e "\n# Added by the garage installer" >> "${BASH_RC}"
 fi
 
-# Set up MuJoCo
+# Set up MuJoCo (for gym)
 if [[ ! -d "${HOME}/.mujoco/mjpro150" ]]; then
-  mkdir "${HOME}"/.mujoco
+  mkdir -p "${HOME}"/.mujoco
   MUJOCO_ZIP="$(mktemp -d)/mujoco.zip"
   wget https://www.roboti.us/download/mjpro150_linux.zip -O "${MUJOCO_ZIP}"
   unzip -u "${MUJOCO_ZIP}" -d "${HOME}"/.mujoco
 else
   print_warning "MuJoCo is already installed"
+fi
+# Set up MuJoCo 2.0 (for dm_control)
+if [[ ! -d "${HOME}/.mujoco/mujoco200_linux" ]]; then
+  mkdir -p "${HOME}"/.mujoco
+  MUJOCO_ZIP="$(mktemp -d)/mujoco.zip"
+  wget https://www.roboti.us/download/mujoco200_linux.zip -O "${MUJOCO_ZIP}"
+  unzip -u "${MUJOCO_ZIP}" -d "${HOME}"/.mujoco
+fi
+# dm_control viewer requires MUJOCO_GL to be set to work
+if [[ "${_arg_modify_bashrc}" = on ]]; then
+  echo "export MUJOCO_GL=\"glfw\"" >> "${BASH_PROF}"
 fi
 # Configure MuJoCo as a shared library
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${HOME}/.mujoco/mjpro150/bin"
@@ -218,16 +229,11 @@ conda activate garage
   # Prevent pip from complaining about available upgrades
   pip install --upgrade pip
 
-  # 'Install' garage as an editable package
-  pip install -e .
-
   if [[ "${_arg_gpu}" = on ]]; then
     # Remove any TensorFlow installations before installing the GPU flavor
     pip uninstall -y tensorflow
-    pip install "tensorflow-gpu<1.10,>=1.9.0"
+    pip install "tensorflow-gpu<1.13,>=1.12.0"
 
-    # pygpu is required by Theano to run on GPU
-    conda install pygpu
   fi
 
   # Install git hooks

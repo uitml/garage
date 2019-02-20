@@ -14,7 +14,6 @@ def step_env(env, n=10, render=True):
             env.render()
         if done:
             break
-    env.close()
 
 
 def step_env_with_gym_quirks(test_case,
@@ -45,8 +44,6 @@ def step_env_with_gym_quirks(test_case,
         # Roundtrip serialization
         round_trip = pickle.loads(pickle.dumps(env))
         assert round_trip.env.spec == env.env.spec
-
-    env.close()
 
 
 def convolve(_input, filter_weights, filter_bias, stride, filter_sizes,

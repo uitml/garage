@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import gym
 
 from garage.baselines import LinearFeatureBaseline
@@ -23,7 +25,7 @@ algo = TRPO(
     max_path_length=200,
     n_itr=120,
     discount=0.99,
-    step_size=0.01,
+    max_kl_step=0.01,
 )
 
 run_experiment(algo.train(), n_parallel=1, snapshot_mode="last", seed=1)

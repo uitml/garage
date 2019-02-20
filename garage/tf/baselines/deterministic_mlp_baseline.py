@@ -36,7 +36,7 @@ class DeterministicMLPBaseline(Baseline, Parameterized, Serializable):
             input_shape=(
                 env_spec.observation_space.flat_dim * num_seq_inputs, ),
             output_dim=1,
-            name="Baseline",
+            name="DeterministicMLPBaseline",
             **regressor_args)
 
     @overrides

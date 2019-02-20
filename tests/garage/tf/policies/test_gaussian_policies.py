@@ -1,12 +1,8 @@
-"""
-This script creates a unittest that tests Gaussian policies in
-garage.tf.policies.
-"""
+import gym
 from nose2 import tools
 
 from garage.baselines import LinearFeatureBaseline
 from garage.envs import normalize
-from garage.envs.box2d import CartpoleEnv
 import garage.misc.logger as logger
 from garage.tf.algos import TRPO
 from garage.tf.envs import TfEnv
@@ -24,7 +20,7 @@ class TestGaussianPolicies(TfGraphTestCase):
     @tools.params(*policies)
     def test_gaussian_policies(self, policy_cls):
         logger.reset()
-        env = TfEnv(normalize(CartpoleEnv()))
+        env = TfEnv(normalize(gym.make("Pendulum-v0")))
 
         policy = policy_cls(name="policy", env_spec=env.spec)
 
@@ -45,3 +41,4 @@ class TestGaussianPolicies(TfGraphTestCase):
                 hvp_approach=FiniteDifferenceHvp(base_eps=1e-5)),
         )
         algo.train(sess=self.sess)
+        env.close()
