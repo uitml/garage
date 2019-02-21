@@ -71,11 +71,7 @@ class TestJson(unittest.TestCase):
 
         result_json = {}
         result_json["time_start"] = timestamp
-        count = 0
         for task in mujoco1m["tasks"]:
-            if count == 1:
-                break
-            count+=1
             env_id = task["env_id"]
             env = gym.make(env_id)
             seeds = random.sample(range(100), task["trials"])
@@ -112,10 +108,10 @@ class TestJson(unittest.TestCase):
                 g_y="AverageReturn",
                 b_x="total/epochs",
                 b_y="rollout/return",
-                factor=6400)
-            
+                factor=params["n_epoch_cycles"]*params["n_rollout_steps"]*params["n_train_steps"]) 
 
-        write_file(json.dumps(result_json), "DDPG")
+        write_file(result_json, "DDPG")
+
     test_json.huge = True
 
 
