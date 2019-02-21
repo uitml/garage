@@ -41,6 +41,8 @@ class TestBenchmarkPPO(unittest.TestCase):
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
         benchmark_dir = "./data/local/benchmark_trpo/%s/" % timestamp
+        result_json = {}
+        result_json["time_start"] = timestamp
         for task in mujoco1m["tasks"]:
             env_id = task["env_id"]
             env = gym.make(env_id)
@@ -82,9 +84,9 @@ class TestBenchmarkPPO(unittest.TestCase):
                 g_y="AverageReturn",
                 b_x="total/epochs",
                 b_y="rollout/return",
-                factor=6400)
+                factor=2048)
             
-        write_file(json.dumps(result_json), "TRPO")
+        write_file(result_json, "TRPO")
     test_benchmark_trpo.huge = True
 
 
