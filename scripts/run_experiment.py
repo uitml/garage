@@ -15,8 +15,8 @@ import psutil
 
 from garage import config
 from garage.experiment.experiment import concretize
-from garage.logger import (CsvOutput, TensorBoardOutput, TextOutput, logger,
-                           snapshotter)
+from garage.logger import CsvOutput, TensorBoardOutput, TextOutput, logger
+from garage.logger import snapshotter
 from garage.logger.utils import dump_variant, log_parameters
 from garage.misc.console import colorize
 from garage.misc.ext import is_iterable, set_seed
