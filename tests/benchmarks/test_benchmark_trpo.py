@@ -10,6 +10,7 @@ import datetime
 import os.path as osp
 import random
 import unittest
+import json
 
 from baselines import logger as baselines_logger
 from baselines.bench import benchmarks
