@@ -23,11 +23,15 @@ class DQN(OffPolicyRLAlgorithm):
                  discount=1.0,
                  name=None,
                  target_network_update_freq=5,
+                 grad_norm_clipping=None,
+                 double_q=False,
                  **kwargs):
         self.qf_lr = qf_lr
         self.qf_optimizer = qf_optimizer
         self.name = name
         self.target_network_update_freq = target_network_update_freq
+        self.grad_norm_clipping = grad_norm_clipping
+        self.double_q = double_q
 
         super().__init__(
             env=env,
@@ -67,8 +71,15 @@ class DQN(OffPolicyRLAlgorithm):
                 self.qf.q_val * tf.one_hot(self.action_t_ph, action_dim),
                 axis=1)
 
-            # Bellman RHS, calculated from target network
-            future_best_q_val = tf.reduce_max(self.target_qval, axis=1)
+            # r + Q'(s', argmax_a(Q(s', _)) - Q(s, a)
+            if self.double_q:
+                target_qval_with_online_q = self.qf.get_qval_sym(self.qf.name, self.next_obs_t_ph)
+                future_best_q_val_action = tf.arg_max(target_qval_with_online_q, 1)
+                future_best_q_val = tf.reduce_sum(self.target_qval * tf.one_hot(future_best_q_val_action, action_dim),
+                    axis=1)
+            else:
+            # r + max_a(Q'(s', _)) - Q(s, a)
+                future_best_q_val = tf.reduce_max(self.target_qval, axis=1)
 
             q_best_masked = (1.0 - self.done_t_ph) * future_best_q_val
             # if done, it's just reward
@@ -80,8 +91,15 @@ class DQN(OffPolicyRLAlgorithm):
             # Create Ops
             # objective function: minimize squared loss
             self._loss = tf.reduce_mean(loss)
-            self._optimize_loss = self.qf_optimizer(self.qf_lr).minimize(
-                self._loss)
+            optimizer = self.qf_optimizer(self.qf_lr)
+            if self.grad_norm_clipping is not None:
+                gradients = optimizer.compute_gradients(self._loss, var_list=self.qf.get_trainable_vars())
+                for i, (grad, var) in enumerate(gradients):
+                    if grad is not None:
+                        gradients[i] = (tf.clip_by_norm(grad, self.grad_norm_clipping), var)
+                self._optimize_loss = optimizer.apply_gradients(gradients)
+            else:
+                self._optimize_loss = optimizer.minimize(self._loss, var_list=self.qf.get_trainable_vars())
 
     @overrides
     def train(self, sess=None):
@@ -92,7 +110,7 @@ class DQN(OffPolicyRLAlgorithm):
         """
         created_session = True if sess is None else False
         if sess is None:
-            self.sess = tf.Session()
+            self.sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
             self.sess.__enter__()
         else:
             self.sess = sess

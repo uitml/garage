@@ -37,6 +37,7 @@ class StackFrames(gym.Wrapper):
         self._frames = deque(maxlen=n_frames)
 
         new_obs_space_shape = env.observation_space.shape + (n_frames, )
+
         _low = env.observation_space.low.flatten()[0]
         _high = env.observation_space.high.flatten()[0]
         self._observation_space = Box(

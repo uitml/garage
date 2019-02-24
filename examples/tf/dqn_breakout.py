@@ -8,9 +8,13 @@ import gym
 
 from garage.envs import normalize
 from garage.envs.wrappers.grayscale import Grayscale
-from garage.envs.wrappers.repeat_action import RepeatAction
+from garage.envs.wrappers.noop import Noop
+from garage.envs.wrappers.episodic_life import EpisodicLife
+from garage.envs.wrappers.max_and_skip import MaxAndSkip
 from garage.envs.wrappers.resize import Resize
 from garage.envs.wrappers.stack_frames import StackFrames
+from garage.envs.wrappers.fire_reset import FireReset
+from garage.envs.wrappers.clipped_reward import ClippedReward
 from garage.experiment import run_experiment
 from garage.replay_buffer import SimpleReplayBuffer
 from garage.tf.algos import DQN
@@ -18,32 +22,34 @@ from garage.tf.envs import TfEnv
 from garage.tf.exploration_strategies import EpsilonGreedyStrategy
 from garage.tf.policies import DiscreteQfDerivedPolicy
 from garage.tf.q_functions import DiscreteCNNQFunction
-
+import tensorflow as tf
 
 def run_task(*_):
     """Run task."""
     max_path_length = 100
-    n_epochs = 500
+    n_epochs = 10000
 
-    env = TfEnv(
-        normalize(
-            StackFrames(
-                RepeatAction(
-                    Resize(
-                        Grayscale(gym.make("BreakoutNoFrameskip-v4")),
-                        width=84,
-                        height=84),
-                    n_frame_to_repeat=3),
-                n_frames=3)))
+    env = gym.make("BreakoutNoFrameskip-v4")
+    env = EpisodicLife(env)
+    env = Noop(env, noop_max=30)
+    env = MaxAndSkip(env, skip=4)
+    if 'FIRE' in env.unwrapped.get_action_meanings():
+        env = FireReset(env)
+    env = Grayscale(env)
+    env = Resize(env, 84, 84)
+    env = ClippedReward(env)
+    env = StackFrames(env, 4)
+
+    env = TfEnv(normalize(env))
 
     replay_buffer = SimpleReplayBuffer(
         env_spec=env.spec,
-        size_in_transitions=int(1e4),
+        size_in_transitions=int(5e4),
         time_horizon=max_path_length,
         dtype="uint8")
 
     qf = DiscreteCNNQFunction(
-        env_spec=env.spec, filter_dims=(8, 4, 3), num_filters=(16, 32, 32))
+        env_spec=env.spec, filter_dims=(8, 4, 3), num_filters=(32, 64, 64), strides=(4, 2, 1), dueling=True)
 
     policy = DiscreteQfDerivedPolicy(env_spec=env, qf=qf)
 
@@ -63,13 +69,14 @@ def run_task(*_):
         max_path_length=max_path_length,
         n_epochs=n_epochs,
         qf_lr=1e-3,
-        discount=1.0,
-        min_buffer_size=1e2,
-        n_train_steps=10,
+        discount=0.99,
+        grad_norm_clipping=10,
+        double_q=True,
+        min_buffer_size=1e4,
+        n_train_steps=500,
         smooth_return=False,
         target_network_update_freq=2,
-        buffer_batch_size=32,
-        dueling=False)
+        buffer_batch_size=32)
 
     algo.train()
 
