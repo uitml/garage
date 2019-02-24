@@ -68,15 +68,82 @@ class DiscreteMLPQFunction(QFunction):
         Return:
             The tf.Tensor of Discrete DiscreteMLPQFunction.
         """
-        if len(self._hidden_sizes) == 1:
-            dueling_hidden_sizes = self._hidden_sizes
+        if isinstance(self._hidden_sizes, int):
+            dueling_hidden_sizes = [self._hidden_sizes]
         else:
             dueling_hidden_sizes = [self._hidden_sizes[-1]]
-        with tf.variable_scope(name):
-            if len(self._hidden_sizes) != 1:
+        with tf.variable_scope(name, reuse=False):
+            if not isinstance(self._hidden_sizes, int):
                 input_var = mlp(
                     input_var=input_var,
-                    output_dim=self._action_dim,
+                    output_dim=self._hidden_sizes[-2],
+                    hidden_sizes=self._hidden_sizes[:-2],
+                    name="mlp",
+                    hidden_nonlinearity=self._hidden_nonlinearity,
+                    hidden_w_init=self._hidden_w_init,
+                    hidden_b_init=self._hidden_b_init,
+                    output_nonlinearity=self._hidden_nonlinearity,
+                    output_w_init=self._hidden_w_init,
+                    output_b_init=self._hidden_b_init,
+                    layer_normalization=self._layer_norm)
+
+            action_out = mlp(
+                input_var=input_var,
+                output_dim=self._action_dim,
+                hidden_sizes=dueling_hidden_sizes,
+                name="action_value",
+                hidden_nonlinearity=self._hidden_nonlinearity,
+                hidden_w_init=self._hidden_w_init,
+                hidden_b_init=self._hidden_b_init,
+                output_nonlinearity=self._output_nonlinearity,
+                output_w_init=self._output_w_init,
+                output_b_init=self._output_b_init,
+                layer_normalization=self._layer_norm)
+            if self._dueling:
+                state_out = mlp(
+                    input_var=input_var,
+                    output_dim=1,
+                    hidden_sizes=dueling_hidden_sizes,
+                    name="state_value",
+                    hidden_nonlinearity=self._hidden_nonlinearity,
+                    hidden_w_init=self._hidden_w_init,
+                    hidden_b_init=self._hidden_b_init,
+                    output_nonlinearity=self._output_nonlinearity,
+                    output_w_init=self._output_w_init,
+                    output_b_init=self._output_b_init,
+                    layer_normalization=self._layer_norm)
+
+                action_out_mean = tf.reduce_mean(action_out, 1)
+                # calculate the advantage of performing certain action
+                # over other action in a particular state
+                action_out_advantage = action_out - tf.expand_dims(
+                    action_out_mean, 1)
+                q_func_out = state_out + action_out_advantage
+            else:
+                q_func_out = action_out
+
+        return q_func_out
+
+    @overrides
+    def get_qval_sym(self, name, input_var):
+        """
+        Symbolic graph for the q-value network.
+
+        Args:
+            input_var: input Tensor of the network.
+
+        Return:
+            The tf.Tensor of Discrete DiscreteMLPQFunction.
+        """
+        if isinstance(self._hidden_sizes, int):
+            dueling_hidden_sizes = [self._hidden_sizes]
+        else:
+            dueling_hidden_sizes = [self._hidden_sizes[-1]]
+        with tf.variable_scope(name, reuse=True):
+            if not isinstance(self._hidden_sizes, int):
+                input_var = mlp(
+                    input_var=input_var,
+                    output_dim=self._hidden_sizes[-2],
                     hidden_sizes=self._hidden_sizes[:-2],
                     name="mlp",
                     hidden_nonlinearity=self._hidden_nonlinearity,
@@ -113,77 +180,6 @@ class DiscreteMLPQFunction(QFunction):
                     output_w_init=self._output_w_init,
                     output_b_init=self._output_b_init,
                     layer_normalization=self._layer_norm)
-
-                action_out_mean = tf.reduce_mean(action_out, 1)
-                # calculate the advantage of performing certain action
-                # over other action in a particular state
-                action_out_advantage = action_out - tf.expand_dims(
-                    action_out_mean, 1)
-                q_func_out = state_out + action_out_advantage
-            else:
-                q_func_out = action_out
-
-        return q_func_out
-
-    @overrides
-    def get_qval_sym(self, input_var):
-        """
-        Symbolic graph for the q-value network.
-
-        Args:
-            input_var: input Tensor of the network.
-
-        Return:
-            The tf.Tensor of Discrete DiscreteMLPQFunction.
-        """
-        if len(self._hidden_sizes) == 1:
-            dueling_hidden_sizes = self._hidden_sizes
-        else:
-            dueling_hidden_sizes = [self._hidden_sizes[-1]]
-        with tf.variable_scope(self.name):
-            if len(self._hidden_sizes) != 1:
-                input_var = mlp(
-                    input_var=input_var,
-                    output_dim=self._action_dim,
-                    hidden_sizes=self._hidden_sizes[:-2],
-                    name="mlp",
-                    hidden_nonlinearity=self._hidden_nonlinearity,
-                    hidden_w_init=self._hidden_w_init,
-                    hidden_b_init=self._hidden_b_init,
-                    output_nonlinearity=self._hidden_nonlinearity,
-                    output_w_init=self._hidden_w_init,
-                    output_b_init=self._hidden_b_init,
-                    layer_normalization=self._layer_norm,
-                    reuse=True)
-
-            action_out = mlp(
-                input_var=input_var,
-                output_dim=self._action_dim,
-                hidden_sizes=dueling_hidden_sizes,
-                name="action_value",
-                hidden_nonlinearity=self._hidden_nonlinearity,
-                hidden_w_init=self._hidden_w_init,
-                hidden_b_init=self._hidden_b_init,
-                output_nonlinearity=self._output_nonlinearity,
-                output_w_init=self._output_w_init,
-                output_b_init=self._output_b_init,
-                layer_normalization=self._layer_norm,
-                reuse=True)
-
-            if self._dueling:
-                state_out = mlp(
-                    input_var=input_var,
-                    output_dim=1,
-                    hidden_sizes=dueling_hidden_sizes,
-                    name="state_value",
-                    hidden_nonlinearity=self._hidden_nonlinearity,
-                    hidden_w_init=self._hidden_w_init,
-                    hidden_b_init=self._hidden_b_init,
-                    output_nonlinearity=self._output_nonlinearity,
-                    output_w_init=self._output_w_init,
-                    output_b_init=self._output_b_init,
-                    layer_normalization=self._layer_norm,
-                    reuse=True)
 
                 action_out_mean = tf.reduce_mean(action_out, 1)
                 # calculate the advantage of performing certain action

@@ -51,6 +51,7 @@ class OffPolicyVectorizedSampler(BatchSampler):
             self.vec_env = VecEnvExecutor(
                 envs=envs, max_path_length=self.algo.max_path_length)
         self.env_spec = self.algo.env.spec
+        self.last_obses = None
 
     @overrides
     def shutdown_worker(self):
@@ -66,8 +67,9 @@ class OffPolicyVectorizedSampler(BatchSampler):
         :return: A list of paths.
         """
         paths = []
-        obses = self.vec_env.reset()
-        dones = np.asarray([True] * self.vec_env.num_envs)
+        # obses = self.vec_env.reset()
+        obses = self.last_obses if self.last_obses else self.vec_env.reset() 
+        dones = np.asarray([False] * self.vec_env.num_envs)
         running_paths = [None] * self.vec_env.num_envs
         n_samples = 0
         batch_samples = self.vec_env.num_envs * self.algo.max_path_length
@@ -147,6 +149,7 @@ class OffPolicyVectorizedSampler(BatchSampler):
                     if self.algo.es:
                         self.algo.es.reset()
             obses = next_obses
+            self.last_obses = obses
         return paths
 
     @overrides
