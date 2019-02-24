@@ -85,12 +85,11 @@ class EpsilonGreedyStrategy(ExplorationStrategy):
             opt_action: optimal actions from this policy.
 
         """
-        if self._epsilon > self._min_epsilon:
-            self._epsilon -= (
-                self._max_epsilon - self._min_epsilon) / self._decay_period
-
         opt_actions, agent_infos = policy.get_actions(observations)
         for itr in range(len(opt_actions)):
+            if self._epsilon > self._min_epsilon:
+                self._epsilon -= (
+                   self._max_epsilon - self._min_epsilon) / self._decay_period
             if np.random.random() < self._epsilon:
                 opt_actions[itr] = self._action_space.sample()
 

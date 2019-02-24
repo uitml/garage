@@ -62,44 +62,46 @@ class DQN(OffPolicyRLAlgorithm):
             self.target_qval = self.qf.build_net(
                 name="target_qf", input_var=self.next_obs_t_ph)
 
-            self._qf_update_ops = get_target_ops(
-                self.qf.get_global_vars(),
-                self.qf.get_global_vars("target_qf"))
+            with tf.name_scope("update_ops"):
+                self._qf_update_ops = get_target_ops(
+                    self.qf.get_global_vars(),
+                    self.qf.get_global_vars("target_qf"))
 
-            # Q-value of the selected action
-            q_selected = tf.reduce_sum(
-                self.qf.q_val * tf.one_hot(self.action_t_ph, action_dim),
-                axis=1)
-
-            # r + Q'(s', argmax_a(Q(s', _)) - Q(s, a)
-            if self.double_q:
-                target_qval_with_online_q = self.qf.get_qval_sym(self.qf.name, self.next_obs_t_ph)
-                future_best_q_val_action = tf.arg_max(target_qval_with_online_q, 1)
-                future_best_q_val = tf.reduce_sum(self.target_qval * tf.one_hot(future_best_q_val_action, action_dim),
+            with tf.name_scope("td_error"):
+                # Q-value of the selected action
+                q_selected = tf.reduce_sum(
+                    self.qf.q_val * tf.one_hot(self.action_t_ph, action_dim),
                     axis=1)
-            else:
-            # r + max_a(Q'(s', _)) - Q(s, a)
-                future_best_q_val = tf.reduce_max(self.target_qval, axis=1)
 
-            q_best_masked = (1.0 - self.done_t_ph) * future_best_q_val
-            # if done, it's just reward
-            # else reward + discount * future_best_q_val
-            target_q_values = self.reward_t_ph + self.discount * q_best_masked
+                # r + Q'(s', argmax_a(Q(s', _)) - Q(s, a)
+                if self.double_q:
+                    target_qval_with_online_q = self.qf.get_qval_sym(self.qf.name, self.next_obs_t_ph)
+                    future_best_q_val_action = tf.arg_max(target_qval_with_online_q, 1)
+                    future_best_q_val = tf.reduce_sum(self.target_qval * tf.one_hot(future_best_q_val_action, action_dim),
+                        axis=1)
+                else:
+                # r + max_a(Q'(s', _)) - Q(s, a)
+                    future_best_q_val = tf.reduce_max(self.target_qval, axis=1)
 
-            td_error = tf.stop_gradient(target_q_values) - q_selected
-            loss = tf.square(td_error)
-            # Create Ops
-            # objective function: minimize squared loss
-            self._loss = tf.reduce_mean(loss)
-            optimizer = self.qf_optimizer(self.qf_lr)
-            if self.grad_norm_clipping is not None:
-                gradients = optimizer.compute_gradients(self._loss, var_list=self.qf.get_trainable_vars())
-                for i, (grad, var) in enumerate(gradients):
-                    if grad is not None:
-                        gradients[i] = (tf.clip_by_norm(grad, self.grad_norm_clipping), var)
-                self._optimize_loss = optimizer.apply_gradients(gradients)
-            else:
-                self._optimize_loss = optimizer.minimize(self._loss, var_list=self.qf.get_trainable_vars())
+                q_best_masked = (1.0 - self.done_t_ph) * future_best_q_val
+                # if done, it's just reward
+                # else reward + discount * future_best_q_val
+                target_q_values = self.reward_t_ph + self.discount * q_best_masked
+
+                td_error = tf.stop_gradient(target_q_values) - q_selected
+                loss = tf.square(td_error)
+                self._loss = tf.reduce_mean(loss)
+
+            with tf.name_scope("optimize_ops"):
+                optimizer = self.qf_optimizer(self.qf_lr)
+                if self.grad_norm_clipping is not None:
+                    gradients = optimizer.compute_gradients(self._loss, var_list=self.qf.get_trainable_vars())
+                    for i, (grad, var) in enumerate(gradients):
+                        if grad is not None:
+                            gradients[i] = (tf.clip_by_norm(grad, self.grad_norm_clipping), var)
+                    self._optimize_loss = optimizer.apply_gradients(gradients)
+                else:
+                    self._optimize_loss = optimizer.minimize(self._loss, var_list=self.qf.get_trainable_vars())
 
     @overrides
     def train(self, sess=None):
@@ -118,45 +120,77 @@ class DQN(OffPolicyRLAlgorithm):
         self.sess.run(tf.global_variables_initializer())
         self.start_worker(self.sess)
 
-        self.sess.run(self._qf_update_ops, feed_dict=dict())
-
         episode_rewards = []
         episode_qf_losses = []
-        last_average_return = []
+        episode_length = []
+        ts = 0
+
+        self.sess.run(self._qf_update_ops, feed_dict=dict())
+
+        obs = self.env.reset()
+        episode_rewards.append(0.)
 
         for itr in range(self.n_epochs):
             with logger.prefix('Epoch #%d | ' % itr):
-                paths = self.obtain_samples(itr)
-                samples_data = self.process_samples(itr, paths)
-                episode_rewards.extend(samples_data["undiscounted_returns"])
-                self.log_diagnostics(paths)
+                # paths = self.obtain_samples(itr)
+                # samples_data = self.process_samples(itr, paths)
+                # episode_rewards.extend(samples_data["undiscounted_returns"])
+                # self.log_diagnostics(paths)
+                
+                if self.es:
+                    action, _ = self.es.get_action(
+                        itr, obs, self.policy)
+                else:
+                    action, _ = self.policy.get_action(
+                        obs)
+
+                next_obs, reward, done, env_info = self.env.step(action)
+
+                self.replay_buffer.add_transition(
+                    observation=[obs],
+                    action=[action],
+                    reward=[reward],
+                    terminal=[done],
+                    next_observation=[next_obs],
+                )
+
+                episode_rewards[-1] += reward
+                ts += 1
+                obs = next_obs
+
+                if done:
+                    episode_length.append(ts)
+                    ts = 0
+                    episode_rewards.append(0.)
+                    obs = self.env.reset()
+
                 for train_itr in range(self.n_train_steps):
                     if self.replay_buffer.n_transitions_stored >= self.min_buffer_size:  # noqa: E501
                         self.evaluate = True
-                        qf_loss = self.optimize_policy(itr, samples_data)
+                        qf_loss = self.optimize_policy(itr, None)
                         episode_qf_losses.append(qf_loss)
-
-                    if itr % self.target_network_update_freq == 0:
-                        self.sess.run(self._qf_update_ops, feed_dict=dict())
+                        if itr % self.target_network_update_freq == 0:
+                            self.sess.run(self._qf_update_ops, feed_dict=dict())
 
                 if self.plot:
                     self.plotter.update_plot(self.policy, self.max_path_length)
                     if self.pause_for_plot:
                         input("Plotting evaluation run: Press Enter to "
                               "continue...")
-
-                if self.evaluate:
+                mean100ep_rewards = round(np.mean(episode_rewards[-101:-1]), 1)
+                mean100ep_qf_loss = round(np.mean(episode_qf_losses[-101:-1]), 1)
+                if self.evaluate and itr % 100 == 0:
                     logger.record_tabular('Epoch', itr)
                     logger.record_tabular('AverageReturn',
-                                          np.mean(episode_rewards))
+                                          mean100ep_rewards)
                     logger.record_tabular('StdReturn', np.std(episode_rewards))
                     logger.record_tabular('QFunction/AverageQFunctionLoss',
-                                          np.mean(episode_qf_losses))
-                    last_average_return.append(np.mean(episode_rewards))
+                                          mean100ep_qf_loss)
+                    logger.record_tabular('EpisodeLength', np.mean(episode_length))
 
-                if not self.smooth_return:
-                    episode_rewards = []
-                    episode_qf_losses = []
+                # if not self.smooth_return:
+                #    episode_rewards = []
+                #    episode_qf_losses = []
 
                 logger.dump_tabular(with_prefix=False)
 
@@ -164,12 +198,13 @@ class DQN(OffPolicyRLAlgorithm):
         if created_session:
             self.sess.close()
 
-        return round(np.mean(last_average_return[-101:-1]), 1)
+        return mean100ep_rewards
 
     @overrides
     def optimize_policy(self, itr, sample_data):
         """Optimize network using experiences from replay buffer."""
         transitions = self.replay_buffer.sample(self.buffer_batch_size)
+
         observations = transitions["observation"]
         rewards = transitions["reward"]
         actions = transitions["action"]

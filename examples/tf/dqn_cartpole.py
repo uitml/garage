@@ -18,14 +18,14 @@ from garage.tf.q_functions import DiscreteMLPQFunction
 
 def run_task(*_):
     """Run task."""
-    max_path_length = 200
-    n_epochs = 50
+    max_path_length = 1
+    n_epochs = 50000
 
     env = TfEnv(normalize(gym.make("CartPole-v0")))
 
     replay_buffer = SimpleReplayBuffer(
         env_spec=env.spec,
-        size_in_transitions=int(20000),
+        size_in_transitions=int(10000),
         time_horizon=max_path_length)
 
     qf = DiscreteMLPQFunction(
@@ -38,7 +38,7 @@ def run_task(*_):
         total_step=max_path_length * n_epochs,
         max_epsilon=1.0,
         min_epsilon=0.02,
-        decay_ratio=0.5)
+        decay_ratio=0.1)
 
     algo = DQN(
         env=env,
@@ -48,12 +48,13 @@ def run_task(*_):
         replay_buffer=replay_buffer,
         max_path_length=max_path_length,
         n_epochs=n_epochs,
-        qf_lr=1e-3,
+        qf_lr=1e-4,
         discount=1.0,
-        min_buffer_size=1e4,
-        n_train_steps=500,
+        min_buffer_size=1e3,
+        n_train_steps=1,
         smooth_return=False,
-        target_network_update_freq=2,
+        double_q=False,
+        target_network_update_freq=1000,
         buffer_batch_size=32)
 
     algo.train()
