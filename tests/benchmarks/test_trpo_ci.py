@@ -81,10 +81,10 @@ class TestBenchmarkPPO(unittest.TestCase):
                 g_csvs=garage_csvs,
                 seeds=seeds,
                 trails=task["trials"],
-                g_x="Epoch",
+                g_x="Iteration",
                 g_y="AverageReturn",
-                b_x="total/epochs",
-                b_y="rollout/return",
+                b_x="Iter",
+                b_y="EpRewMean",
                 factor=2048)
             
         write_file(result_json, "TRPO")
