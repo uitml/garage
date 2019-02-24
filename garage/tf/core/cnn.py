@@ -7,7 +7,7 @@ def cnn(input_var,
         output_dim,
         filter_dims,
         num_filters,
-        stride,
+        strides,
         name,
         padding="VALID",
         hidden_nonlinearity=tf.nn.relu,
@@ -15,7 +15,8 @@ def cnn(input_var,
         hidden_b_init=tf.zeros_initializer(),
         output_nonlinearity=None,
         output_w_init=tf.contrib.layers.xavier_initializer(),
-        output_b_init=tf.zeros_initializer()):
+        output_b_init=tf.zeros_initializer(),
+        reuse=False):
     """
     CNN model. Based on 'NHWC' data format: [batch, height, width, channel].
 
@@ -24,7 +25,7 @@ def cnn(input_var,
         output_dim: Dimension of the network output.
         filter_dims: Dimension of the filters.
         num_filters: Number of filters.
-        stride: The stride of the sliding window.
+        strides: The stride of the sliding window.
         name: Variable scope of the cnn.
         padding: The type of padding algorithm to use, from "SAME", "VALID".
         hidden_nonlinearity: Activation function for
@@ -43,13 +44,12 @@ def cnn(input_var,
     Return:
         The output tf.Tensor of the CNN.
     """
-    strides = [1, stride, stride, 1]
-
-    with tf.variable_scope(name):
+    with tf.variable_scope(name, reuse=reuse):
         h = input_var
-        for index, (filter_dim, num_filter) in enumerate(
-                zip(filter_dims, num_filters)):
-            h = _conv(h, 'h{}'.format(index), filter_dim, num_filter, strides,
+        for index, (filter_dim, num_filter, stride) in enumerate(
+                zip(filter_dims, num_filters, strides)):
+            _stride = [1, stride, stride, 1]
+            h = _conv(h, 'h{}'.format(index), filter_dim, num_filter, _stride,
                       hidden_w_init, hidden_b_init, padding)
             if hidden_nonlinearity is not None:
                 h = hidden_nonlinearity(h)
@@ -83,7 +83,8 @@ def cnn_with_max_pooling(input_var,
                          hidden_b_init=tf.zeros_initializer(),
                          output_nonlinearity=None,
                          output_w_init=tf.contrib.layers.xavier_initializer(),
-                         output_b_init=tf.zeros_initializer()):
+                         output_b_init=tf.zeros_initializer(),
+                         reuse=False):
     """
     CNN model. Based on 'NHWC' data format: [batch, height, width, channel].
 
@@ -147,7 +148,7 @@ def _conv(input_var,
           name,
           filter_size,
           num_filter,
-          strides,
+          stride,
           hidden_w_init,
           hidden_b_init,
           padding="VALID"):
@@ -163,4 +164,4 @@ def _conv(input_var,
         bias = tf.get_variable('bias', b_shape, initializer=hidden_b_init)
 
         return tf.nn.conv2d(
-            input_var, weight, strides=strides, padding=padding) + bias
+            input_var, weight, strides=stride, padding=padding) + bias

@@ -19,7 +19,7 @@ from garage.tf.q_functions import DiscreteMLPQFunction
 def run_task(*_):
     """Run task."""
     max_path_length = 200
-    n_epochs = 200
+    n_epochs = 50
 
     env = TfEnv(normalize(gym.make("CartPole-v0")))
 
@@ -50,10 +50,10 @@ def run_task(*_):
         n_epochs=n_epochs,
         qf_lr=1e-3,
         discount=1.0,
-        min_buffer_size=1e3,
-        n_train_steps=20,
+        min_buffer_size=1e4,
+        n_train_steps=500,
         smooth_return=False,
-        target_network_update_freq=5,
+        target_network_update_freq=2,
         buffer_batch_size=32)
 
     algo.train()
