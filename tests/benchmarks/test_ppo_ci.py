@@ -50,11 +50,7 @@ class TestBenchmarkPPO(unittest.TestCase):
         benchmark_dir = "./data/local/benchmark_ppo/%s/" % timestamp
         result_json = {}
         result_json["time_start"] = timestamp
-        count = 0
         for task in mujoco1m["tasks"]:
-            if count == 1:
-                break
-            count = 1
             env_id = task["env_id"]
             env = gym.make(env_id)
             baseline_env = AutoStopEnv(env_name=env_id)
