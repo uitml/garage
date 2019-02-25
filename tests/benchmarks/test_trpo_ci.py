@@ -7,6 +7,7 @@ garage.tf.samplers.BatchSampler to smooth the reward curve.
 """
 import datetime
 import os.path as osp
+import os
 import random
 import unittest
 import json
