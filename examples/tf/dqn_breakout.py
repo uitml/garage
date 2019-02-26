@@ -17,6 +17,7 @@ from garage.envs.wrappers.fire_reset import FireReset
 from garage.envs.wrappers.clipped_reward import ClippedReward
 from garage.experiment import run_experiment
 from garage.replay_buffer import SimpleReplayBuffer
+from garage.replay_buffer.queue_replay_buffer import QueueReplayBuffer
 from garage.tf.algos import DQN
 from garage.tf.envs import TfEnv
 from garage.tf.exploration_strategies import EpsilonGreedyStrategy
@@ -26,12 +27,12 @@ import tensorflow as tf
 
 def run_task(*_):
     """Run task."""
-    max_path_length = 100
-    n_epochs = 10000
+    max_path_length = 1
+    n_epochs = 1000000
 
-    env = gym.make("BreakoutNoFrameskip-v4")
+    env = gym.make("PongNoFrameskip-v4")
     env = EpisodicLife(env)
-    env = Noop(env, noop_max=30)
+    env = Noop(env, noop_max=10)
     env = MaxAndSkip(env, skip=4)
     if 'FIRE' in env.unwrapped.get_action_meanings():
         env = FireReset(env)
@@ -42,14 +43,15 @@ def run_task(*_):
 
     env = TfEnv(normalize(env))
 
-    replay_buffer = SimpleReplayBuffer(
-        env_spec=env.spec,
-        size_in_transitions=int(5e4),
-        time_horizon=max_path_length,
-        dtype="uint8")
+    replay_buffer = QueueReplayBuffer(capacity=int(2e5))
+        
+    # replay_buffer = SimpleReplayBuffer(
+    #     env_spec=env.spec,
+    #     size_in_transitions=int(5e4),
+    #     time_horizon=max_path_length)
 
     qf = DiscreteCNNQFunction(
-        env_spec=env.spec, filter_dims=(8, 4, 3), num_filters=(32, 64, 64), strides=(4, 2, 1), dueling=True)
+        env_spec=env.spec, filter_dims=(8, 4, 3), num_filters=(32, 64, 64), strides=(4, 2, 1), dueling=False)
 
     policy = DiscreteQfDerivedPolicy(env_spec=env, qf=qf)
 
@@ -71,11 +73,11 @@ def run_task(*_):
         qf_lr=1e-3,
         discount=0.99,
         grad_norm_clipping=10,
-        double_q=True,
+        double_q=False,
         min_buffer_size=1e4,
-        n_train_steps=500,
+        n_train_steps=1,
         smooth_return=False,
-        target_network_update_freq=2,
+        target_network_update_freq=2000,
         buffer_batch_size=32)
 
     algo.train()

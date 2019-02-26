@@ -15,8 +15,7 @@ def cnn(input_var,
         hidden_b_init=tf.zeros_initializer(),
         output_nonlinearity=None,
         output_w_init=tf.contrib.layers.xavier_initializer(),
-        output_b_init=tf.zeros_initializer(),
-        reuse=False):
+        output_b_init=tf.zeros_initializer()):
     """
     CNN model. Based on 'NHWC' data format: [batch, height, width, channel].
 
@@ -44,7 +43,7 @@ def cnn(input_var,
     Return:
         The output tf.Tensor of the CNN.
     """
-    with tf.variable_scope(name, reuse=reuse):
+    with tf.variable_scope(name):
         h = input_var
         for index, (filter_dim, num_filter, stride) in enumerate(
                 zip(filter_dims, num_filters, strides)):
@@ -83,8 +82,7 @@ def cnn_with_max_pooling(input_var,
                          hidden_b_init=tf.zeros_initializer(),
                          output_nonlinearity=None,
                          output_w_init=tf.contrib.layers.xavier_initializer(),
-                         output_b_init=tf.zeros_initializer(),
-                         reuse=False):
+                         output_b_init=tf.zeros_initializer()):
     """
     CNN model. Based on 'NHWC' data format: [batch, height, width, channel].
 

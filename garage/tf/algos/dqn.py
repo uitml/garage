@@ -147,11 +147,11 @@ class DQN(OffPolicyRLAlgorithm):
                 next_obs, reward, done, env_info = self.env.step(action)
 
                 self.replay_buffer.add_transition(
-                    observation=[obs],
-                    action=[action],
-                    reward=[reward],
-                    terminal=[done],
-                    next_observation=[next_obs],
+                    observation=obs,
+                    action=action,
+                    reward=reward,
+                    terminal=done,
+                    next_observation=next_obs,
                 )
 
                 episode_rewards[-1] += reward
@@ -178,8 +178,8 @@ class DQN(OffPolicyRLAlgorithm):
                         input("Plotting evaluation run: Press Enter to "
                               "continue...")
                 mean100ep_rewards = round(np.mean(episode_rewards[-101:-1]), 1)
-                mean100ep_qf_loss = round(np.mean(episode_qf_losses[-101:-1]), 1)
-                if self.evaluate and itr % 100 == 0:
+                mean100ep_qf_loss = np.mean(episode_qf_losses[-101:-1])
+                if self.evaluate and itr % 1000 == 0:
                     logger.record_tabular('Epoch', itr)
                     logger.record_tabular('AverageReturn',
                                           mean100ep_rewards)

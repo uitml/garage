@@ -85,7 +85,7 @@ class DiscreteCNNQFunction(QFunction):
         Return:
             The tf.Tensor of Discrete CNNQFunction.
         """
-        with tf.variable_scope(name):
+        with tf.variable_scope(name, reuse=False):
             if self._max_pooling:
                 input_var = cnn_with_max_pooling(
                     input_var=input_var,
@@ -94,7 +94,7 @@ class DiscreteCNNQFunction(QFunction):
                     hidden_nonlinearity=self._hidden_nonlinearity,
                     output_nonlinearity=self._hidden_nonlinearity,
                     num_filters=self._num_filters,
-                    stride=self._strides,
+                    strides=self._strides,
                     padding=self._padding,
                     max_pooling=self._max_pooling,
                     pool_shape=self._pool_shape,
@@ -164,7 +164,7 @@ class DiscreteCNNQFunction(QFunction):
         Return:
             The tf.Tensor of Discrete CNNQFunction.
         """
-        with tf.variable_scope(name):
+        with tf.variable_scope(name, reuse=True):
             if self._max_pooling:
                 input_var = cnn_with_max_pooling(
                     input_var=input_var,
@@ -177,8 +177,7 @@ class DiscreteCNNQFunction(QFunction):
                     padding=self._padding,
                     max_pooling=self._max_pooling,
                     pool_shape=self._pool_shape,
-                    name="cnn",
-                    reuse=True)
+                    name="cnn")
             else:
                 input_var = cnn(
                     input_var=input_var,
@@ -189,8 +188,7 @@ class DiscreteCNNQFunction(QFunction):
                     num_filters=self._num_filters,
                     strides=self._strides,
                     padding=self._padding,
-                    name="cnn",
-                    reuse=True)
+                    name="cnn")
 
             dueling_hidden_sizes = [256]
 
@@ -205,8 +203,7 @@ class DiscreteCNNQFunction(QFunction):
                 output_nonlinearity=self._output_nonlinearity,
                 output_w_init=self._output_w_init,
                 output_b_init=self._output_b_init,
-                layer_normalization=self._layer_norm,
-                reuse=True)
+                layer_normalization=self._layer_norm)
 
             if self._dueling:
                 state_out = mlp(
@@ -220,8 +217,7 @@ class DiscreteCNNQFunction(QFunction):
                     output_nonlinearity=self._output_nonlinearity,
                     output_w_init=self._output_w_init,
                     output_b_init=self._output_b_init,
-                    layer_normalization=self._layer_norm,
-                    reuse=True)
+                    layer_normalization=self._layer_norm)
 
                 action_out_mean = tf.reduce_mean(action_out, 1)
                 # calculate the advantage of performing certain action
