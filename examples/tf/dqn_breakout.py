@@ -72,7 +72,7 @@ def run_task(*_):
         qf_lr=1e-4,
         discount=0.99,
         grad_norm_clipping=10,
-        double_q=True,
+        double_q=False,
         min_buffer_size=1e4,
         n_train_steps=1,
         smooth_return=False,

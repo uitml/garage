@@ -160,11 +160,11 @@ class DQN(OffPolicyRLAlgorithm):
                     next_obs = np.array(next_obs)
 
                 self.replay_buffer.add_transition(
-                    observation=[obs],
-                    action=[action],
-                    reward=[reward],
-                    terminal=[done],
-                    next_observation=[next_obs],
+                    observation=obs,
+                    action=action,
+                    reward=reward,
+                    terminal=done,
+                    next_observation=next_obs,
                 )
 
                 episode_rewards[-1] += reward
