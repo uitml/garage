@@ -25,6 +25,7 @@ class DQN(OffPolicyRLAlgorithm):
                  target_network_update_freq=5,
                  grad_norm_clipping=None,
                  double_q=False,
+                 use_atari_wrappers=False,
                  **kwargs):
         self.qf_lr = qf_lr
         self.qf_optimizer = qf_optimizer
@@ -32,6 +33,7 @@ class DQN(OffPolicyRLAlgorithm):
         self.target_network_update_freq = target_network_update_freq
         self.grad_norm_clipping = grad_norm_clipping
         self.double_q = double_q
+        self.use_atari_wrappers = use_atari_wrappers
 
         super().__init__(
             env=env,
@@ -128,6 +130,9 @@ class DQN(OffPolicyRLAlgorithm):
         self.sess.run(self._qf_update_ops, feed_dict=dict())
 
         obs = self.env.reset()
+        if self.use_atari_wrappers:
+            obs = np.array(obs)
+            
         episode_rewards.append(0.)
 
         for itr in range(self.n_epochs):
@@ -137,14 +142,22 @@ class DQN(OffPolicyRLAlgorithm):
                 # episode_rewards.extend(samples_data["undiscounted_returns"])
                 # self.log_diagnostics(paths)
                 
+                if len(self.env.spec.observation_space.shape) == 3:
+                    obs_scaled = obs.astype(np.float32) / 255.0
+                else:
+                    obs_scaled = obs
+
                 if self.es:
                     action, _ = self.es.get_action(
-                        itr, obs, self.policy)
+                        itr, obs_scaled, self.policy)
                 else:
                     action, _ = self.policy.get_action(
-                        obs)
+                        obs_scaled)
 
                 next_obs, reward, done, env_info = self.env.step(action)
+
+                if self.use_atari_wrappers:
+                    next_obs = np.array(next_obs)
 
                 self.replay_buffer.add_transition(
                     observation=[obs],
@@ -163,6 +176,8 @@ class DQN(OffPolicyRLAlgorithm):
                     ts = 0
                     episode_rewards.append(0.)
                     obs = self.env.reset()
+                    if self.use_atari_wrappers:
+                        obs = np.array(obs)
 
                 for train_itr in range(self.n_train_steps):
                     if self.replay_buffer.n_transitions_stored >= self.min_buffer_size:  # noqa: E501
@@ -178,8 +193,8 @@ class DQN(OffPolicyRLAlgorithm):
                         input("Plotting evaluation run: Press Enter to "
                               "continue...")
                 mean100ep_rewards = round(np.mean(episode_rewards[-101:-1]), 1)
-                mean100ep_qf_loss = round(np.mean(episode_qf_losses[-101:-1]), 1)
-                if self.evaluate and itr % 100 == 0:
+                mean100ep_qf_loss = np.mean(episode_qf_losses[-101:-1])
+                if self.evaluate and itr % 1000 == 0:
                     logger.record_tabular('Epoch', itr)
                     logger.record_tabular('AverageReturn',
                                           mean100ep_rewards)
