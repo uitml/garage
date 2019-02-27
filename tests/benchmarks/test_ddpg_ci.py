@@ -108,7 +108,7 @@ class TestJson(unittest.TestCase):
                 g_y="AverageReturn",
                 b_x="total/epochs",
                 b_y="rollout/return",
-                factor=params["n_epoch_cycles"]*params["n_rollout_steps"]*params["n_train_steps"]) 
+                factor=params["n_epoch_cycles"]*params["n_rollout_steps"]) 
 
         write_file(result_json, "DDPG")
 
