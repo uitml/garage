@@ -28,8 +28,8 @@ import pandas as pd
 import tensorflow as tf
 
 from garage.experiment import LocalRunner
-from garage.logger import CsvOutput, logger as garage_logger, TensorBoardOutput
 from garage.exploration_strategies import OUStrategy
+from garage.logger import CsvOutput, logger as garage_logger, TensorBoardOutput
 from garage.misc import ext
 from garage.replay_buffer import SimpleReplayBuffer
 from garage.tf.algos import DDPG
