@@ -21,7 +21,6 @@ def cnn(input_var,
 
     Args:
         input_var: Input tf.Tensor to the CNN.
-        output_dim: Dimension of the network output.
         filter_dims: Dimension of the filters.
         num_filters: Number of filters.
         strides: The stride of the sliding window.

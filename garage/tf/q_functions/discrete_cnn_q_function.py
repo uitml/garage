@@ -168,7 +168,7 @@ class DiscreteCNNQFunction(QFunction):
             if self._max_pooling:
                 input_var = cnn_with_max_pooling(
                     input_var=input_var,
-                    output_dim=512,
+                    output_dim=256,
                     filter_dims=self._filter_dims,
                     hidden_nonlinearity=self._hidden_nonlinearity,
                     output_nonlinearity=self._hidden_nonlinearity,
@@ -181,7 +181,7 @@ class DiscreteCNNQFunction(QFunction):
             else:
                 input_var = cnn(
                     input_var=input_var,
-                    output_dim=512,
+                    output_dim=256,
                     filter_dims=self._filter_dims,
                     hidden_nonlinearity=self._hidden_nonlinearity,
                     output_nonlinearity=self._hidden_nonlinearity,

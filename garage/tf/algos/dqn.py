@@ -78,7 +78,7 @@ class DQN(OffPolicyRLAlgorithm):
                 # r + Q'(s', argmax_a(Q(s', _)) - Q(s, a)
                 if self.double_q:
                     target_qval_with_online_q = self.qf.get_qval_sym(self.qf.name, self.next_obs_t_ph)
-                    future_best_q_val_action = tf.arg_max(target_qval_with_online_q, 1)
+                    future_best_q_val_action = tf.argmax(target_qval_with_online_q, 1)
                     future_best_q_val = tf.reduce_sum(self.target_qval * tf.one_hot(future_best_q_val_action, action_dim),
                         axis=1)
                 else:
@@ -114,7 +114,8 @@ class DQN(OffPolicyRLAlgorithm):
         """
         created_session = True if sess is None else False
         if sess is None:
-            self.sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
+            # self.sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
+            self.sess = tf.Session()
             self.sess.__enter__()
         else:
             self.sess = sess
@@ -136,7 +137,7 @@ class DQN(OffPolicyRLAlgorithm):
         episode_rewards.append(0.)
 
         for itr in range(self.n_epochs):
-            with logger.prefix('Epoch #%d | ' % itr):
+            with logger.prefix('Iteration #%d | ' % itr):
                 # paths = self.obtain_samples(itr)
                 # samples_data = self.process_samples(itr, paths)
                 # episode_rewards.extend(samples_data["undiscounted_returns"])
@@ -160,11 +161,11 @@ class DQN(OffPolicyRLAlgorithm):
                     next_obs = np.array(next_obs)
 
                 self.replay_buffer.add_transition(
-                    observation=obs,
-                    action=action,
-                    reward=reward,
-                    terminal=done,
-                    next_observation=next_obs,
+                    observation=[obs],
+                    action=[action],
+                    reward=[reward],
+                    terminal=[done],
+                    next_observation=[next_obs],
                 )
 
                 episode_rewards[-1] += reward
@@ -179,13 +180,12 @@ class DQN(OffPolicyRLAlgorithm):
                     if self.use_atari_wrappers:
                         obs = np.array(obs)
 
-                for train_itr in range(self.n_train_steps):
-                    if self.replay_buffer.n_transitions_stored >= self.min_buffer_size:  # noqa: E501
-                        self.evaluate = True
-                        qf_loss = self.optimize_policy(itr, None)
-                        episode_qf_losses.append(qf_loss)
-                        if itr % self.target_network_update_freq == 0:
-                            self.sess.run(self._qf_update_ops, feed_dict=dict())
+                if itr >= self.min_buffer_size and itr % self.n_train_steps == 0:  # noqa: E501
+                    self.evaluate = True
+                    qf_loss = self.optimize_policy(itr, None)
+                    episode_qf_losses.append(qf_loss)
+                    if itr % self.target_network_update_freq == 0:
+                        self.sess.run(self._qf_update_ops, feed_dict=dict())
 
                 if self.plot:
                     self.plotter.update_plot(self.policy, self.max_path_length)
@@ -195,7 +195,7 @@ class DQN(OffPolicyRLAlgorithm):
                 mean100ep_rewards = round(np.mean(episode_rewards[-101:-1]), 1)
                 mean100ep_qf_loss = np.mean(episode_qf_losses[-101:-1])
                 if self.evaluate and itr % 1000 == 0:
-                    logger.record_tabular('Epoch', itr)
+                    logger.record_tabular('Iteration', itr)
                     logger.record_tabular('AverageReturn',
                                           mean100ep_rewards)
                     logger.record_tabular('StdReturn', np.std(episode_rewards))

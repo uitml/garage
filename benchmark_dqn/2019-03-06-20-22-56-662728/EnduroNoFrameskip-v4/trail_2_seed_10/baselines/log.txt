@@ -1,0 +1,2 @@
+Logging to ./benchmark_dqn/2019-03-06-20-22-56-662728/EnduroNoFrameskip-v4/trail_2_seed_10/baselines
+rank 0: seed=10, logdir=./benchmark_dqn/2019-03-06-20-22-56-662728/EnduroNoFrameskip-v4/trail_2_seed_10/baselines

@@ -1,0 +1,32 @@
+Logging to ./benchmark_dqn/2019-03-06-20-22-56-662728/BeamRiderNoFrameskip-v4/trail_5_seed_89/baselines
+rank 0: seed=89, logdir=./benchmark_dqn/2019-03-06-20-22-56-662728/BeamRiderNoFrameskip-v4/trail_5_seed_89/baselines
+--------------------------------------
+| % time spent exploring  | 1        |
+| episodes                | 2        |
+| mean 100 episode reward | 3        |
+| steps                   | 401      |
+--------------------------------------
+--------------------------------------
+| % time spent exploring  | 1        |
+| episodes                | 3        |
+| mean 100 episode reward | 1.5      |
+| steps                   | 627      |
+--------------------------------------
+--------------------------------------
+| % time spent exploring  | 1        |
+| episodes                | 4        |
+| mean 100 episode reward | 1.3      |
+| steps                   | 1057     |
+--------------------------------------
+--------------------------------------
+| % time spent exploring  | 1        |
+| episodes                | 5        |
+| mean 100 episode reward | 1.8      |
+| steps                   | 1476     |
+--------------------------------------
+--------------------------------------
+| % time spent exploring  | 1        |
+| episodes                | 6        |
+| mean 100 episode reward | 1.4      |
+| steps                   | 1680     |
+--------------------------------------

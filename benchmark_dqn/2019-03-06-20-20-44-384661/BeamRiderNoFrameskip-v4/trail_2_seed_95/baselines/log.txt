@@ -1,0 +1,2 @@
+Logging to ./benchmark_dqn/2019-03-06-20-20-44-384661/BeamRiderNoFrameskip-v4/trail_2_seed_95/baselines
+rank 0: seed=95, logdir=./benchmark_dqn/2019-03-06-20-20-44-384661/BeamRiderNoFrameskip-v4/trail_2_seed_95/baselines

@@ -1,0 +1,10 @@
+Iteration,AverageReturn,StdReturn,QFunction/AverageQFunctionLoss,EpisodeLength
+100,nan,0.0,nan,nan
+200,nan,0.0,48.497524,nan
+300,nan,0.0,29.887363,nan
+400,nan,0.0,32.37572,nan
+500,nan,0.0,25.450747,nan
+600,nan,0.0,30.534063,nan
+700,nan,0.0,21.942488,nan
+800,nan,0.0,22.314032,nan
+900,2.0,1.0,28.775873,843.0
