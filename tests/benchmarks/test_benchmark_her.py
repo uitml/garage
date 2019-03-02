@@ -167,10 +167,10 @@ def run_garage(env, seed, log_dir):
         logger.add_output(CsvOutput(tabular_log_file))
         logger.add_output(TensorBoardOutput(log_dir))
 
-            runner.setup(algo, env)
-            runner.train(
-                n_epochs=params['n_epochs'],
-                n_epoch_cycles=params['n_epoch_cycles'])
+        runner.setup(algo, env)
+        runner.train(
+            n_epochs=params['n_epochs'],
+            n_epoch_cycles=params['n_epoch_cycles'])
 
         logger.remove_all()
 
