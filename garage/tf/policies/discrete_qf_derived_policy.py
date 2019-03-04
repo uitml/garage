@@ -6,9 +6,9 @@ This policy chooses the action that yields to the largest q-value.
 import numpy as np
 import tensorflow as tf
 
+from akro import Discrete
 from garage.core import Serializable
 from garage.misc.overrides import overrides
-from garage.spaces import Discrete
 from garage.tf.policies import Policy
 
 
@@ -49,7 +49,8 @@ class DiscreteQfDerivedPolicy(Policy, Serializable):
         """
         sess = tf.get_default_session()
         q_vals = sess.run(
-            self._qf.q_val, feed_dict={self._qf.obs_ph: [observation]})
+            self._qf.model.networks['default'].output,
+            feed_dict={self._qf.model.networks['default'].input: [observation]})
         opt_action = np.argmax(q_vals)
 
         return opt_action, dict()
@@ -69,7 +70,8 @@ class DiscreteQfDerivedPolicy(Policy, Serializable):
         """
         sess = tf.get_default_session()
         q_vals = sess.run(
-            self._qf.q_val, feed_dict={self._qf.obs_ph: observations})
+            self._qf.model.networks['default'].output,
+            feed_dict={self._qf.model.networks['default'].input: observations})
         opt_actions = np.argmax(q_vals, axis=1)
 
         return opt_actions, dict()

@@ -70,13 +70,13 @@ class DQN(OffPolicyRLAlgorithm):
             with tf.name_scope("td_error"):
                 # Q-value of the selected action
                 q_selected = tf.reduce_sum(
-                    self.qf.q_val * tf.one_hot(self.action_t_ph, action_dim),
+                    self.qf.model.networks['default'].output * tf.one_hot(self.action_t_ph, action_dim),
                     axis=1)
 
                 # r + Q'(s', argmax_a(Q(s', _)) - Q(s, a)
                 if self.double_q:
                     target_qval_with_online_q = self.qf.get_qval_sym(self.qf.name, self.next_obs_t_ph)
-                    future_best_q_val_action = tf.arg_max(target_qval_with_online_q, 1)
+                    future_best_q_val_action = tf.argmax(target_qval_with_online_q, 1)
                     future_best_q_val = tf.reduce_sum(self.target_qval * tf.one_hot(future_best_q_val_action, action_dim),
                         axis=1)
                 else:
@@ -147,11 +147,11 @@ class DQN(OffPolicyRLAlgorithm):
                 next_obs, reward, done, env_info = self.env.step(action)
 
                 self.replay_buffer.add_transition(
-                    observation=obs,
-                    action=action,
-                    reward=reward,
-                    terminal=done,
-                    next_observation=next_obs,
+                    observation=[obs],
+                    action=[action],
+                    reward=[reward],
+                    terminal=[done],
+                    next_observation=[next_obs],
                 )
 
                 episode_rewards[-1] += reward
@@ -218,7 +218,7 @@ class DQN(OffPolicyRLAlgorithm):
         loss, _ = self.sess.run(
             [self._loss, self._optimize_loss],
             feed_dict={
-                self.qf.obs_ph: observations,
+                self.qf.model.networks['default'].input: observations,
                 self.action_t_ph: actions,
                 self.reward_t_ph: rewards,
                 self.done_t_ph: dones,

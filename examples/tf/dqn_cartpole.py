@@ -8,16 +8,19 @@ import gym
 
 from garage.envs import normalize
 from garage.experiment import run_experiment
+from garage.exploration_strategies import EpsilonGreedyStrategy
 from garage.replay_buffer import SimpleReplayBuffer
 from garage.tf.algos import DQN
 from garage.tf.envs import TfEnv
-from garage.tf.exploration_strategies import EpsilonGreedyStrategy
 from garage.tf.policies import DiscreteQfDerivedPolicy
 from garage.tf.q_functions import DiscreteMLPQFunction
 
+import tensorflow as tf
 
-def run_task(*_):
-    """Run task."""
+
+# def run_task(*_):
+"""Run task."""
+with tf.Session() as sess:
     max_path_length = 1
     n_epochs = 50000
 
@@ -29,13 +32,13 @@ def run_task(*_):
         time_horizon=max_path_length)
 
     qf = DiscreteMLPQFunction(
-        env_spec=env.spec, hidden_sizes=(64, 64), dueling=False)
+        env_spec=env.spec, hidden_sizes=(64, 64))
 
     policy = DiscreteQfDerivedPolicy(env_spec=env, qf=qf)
 
     epilson_greedy_strategy = EpsilonGreedyStrategy(
         env_spec=env.spec,
-        total_step=max_path_length * n_epochs,
+        total_timesteps=max_path_length * n_epochs,
         max_epsilon=1.0,
         min_epsilon=0.02,
         decay_ratio=0.1)
@@ -57,13 +60,13 @@ def run_task(*_):
         target_network_update_freq=1000,
         buffer_batch_size=32)
 
-    algo.train()
+    algo.train(sess)
 
 
-run_experiment(
-    run_task,
-    n_parallel=1,
-    snapshot_mode="last",
-    seed=1,
-    plot=False,
-)
+# run_experiment(
+#     run_task,
+#     n_parallel=1,
+#     snapshot_mode="last",
+#     seed=1,
+#     plot=False,
+# )

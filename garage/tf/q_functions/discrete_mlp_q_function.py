@@ -3,9 +3,10 @@ import tensorflow as tf
 
 from garage.misc.overrides import overrides
 from garage.tf.models.discrete_mlp_model import DiscreteMLPModel
+from garage.tf.q_functions import QFunction
 
 
-class DiscreteMLPQFunction:
+class DiscreteMLPQFunction(QFunction):
     """
     Discrete MLP Q Function.
 
@@ -43,10 +44,12 @@ class DiscreteMLPQFunction:
                  output_b_init=tf.zeros_initializer,
                  layer_normalization=False):
         obs_dim = env_spec.observation_space.shape
-        action_dim = env_spec.action_space.flat_dim
+        self.name = name
+        self._action_dim = env_spec.action_space.flat_dim
+        self._hidden_sizes = hidden_sizes
 
         self.model = DiscreteMLPModel(
-            output_dim=action_dim,
+            output_dim=self._action_dim,
             name=name,
             hidden_sizes=hidden_sizes,
             hidden_nonlinearity=hidden_nonlinearity,
@@ -61,6 +64,13 @@ class DiscreteMLPQFunction:
 
         self.model.build(obs_ph)
 
+    def build_net(self, input_var, name):
+        model = DiscreteMLPModel(
+            output_dim=self._action_dim,
+            name=name,
+            hidden_sizes=self._hidden_sizes)
+
+        return model.build(input_var)
     @overrides
     def get_qval_sym(self, state_input, name):
         """

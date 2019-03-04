@@ -56,12 +56,13 @@ class EpsilonGreedyStrategy(ExplorationStrategy):
             opt_action: optimal action from this policy.
 
         """
-        opt_action = policy.get_action(observation)
+
+        opt_action, info = policy.get_action(observation)
         self._decay()
         if np.random.random() < self._epsilon:
             opt_action = self._action_space.sample()
 
-        return opt_action
+        return opt_action, info
 
     @overrides
     def get_actions(self, t, observations, policy, **kwargs):
@@ -77,13 +78,13 @@ class EpsilonGreedyStrategy(ExplorationStrategy):
             opt_action: optimal actions from this policy.
 
         """
-        opt_actions = policy.get_actions(observations)
+        opt_actions, info = policy.get_actions(observations)
         for itr in range(len(opt_actions)):
             self._decay()
             if np.random.random() < self._epsilon:
                 opt_actions[itr] = self._action_space.sample()
 
-        return opt_actions
+        return opt_actions, info
 
     def _decay(self):
         if self._epsilon > self._min_epsilon:

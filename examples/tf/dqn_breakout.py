@@ -16,17 +16,18 @@ from garage.envs.wrappers.stack_frames import StackFrames
 from garage.envs.wrappers.fire_reset import FireReset
 from garage.envs.wrappers.clipped_reward import ClippedReward
 from garage.experiment import run_experiment
+from garage.exploration_strategies import EpsilonGreedyStrategy
 from garage.replay_buffer import SimpleReplayBuffer
 from garage.replay_buffer.queue_replay_buffer import QueueReplayBuffer
 from garage.tf.algos import DQN
 from garage.tf.envs import TfEnv
-from garage.tf.exploration_strategies import EpsilonGreedyStrategy
 from garage.tf.policies import DiscreteQfDerivedPolicy
 from garage.tf.q_functions import DiscreteCNNQFunction
 import tensorflow as tf
 
-def run_task(*_):
-    """Run task."""
+# def run_task(*_):
+"""Run task."""
+with tf.Session() as sess:
     max_path_length = 1
     n_epochs = 1000000
 
@@ -43,21 +44,22 @@ def run_task(*_):
 
     env = TfEnv(normalize(env))
 
-    replay_buffer = QueueReplayBuffer(capacity=int(2e5))
+    # replay_buffer = QueueReplayBuffer(capacity=int(2e5))
         
-    # replay_buffer = SimpleReplayBuffer(
-    #     env_spec=env.spec,
-    #     size_in_transitions=int(5e4),
-    #     time_horizon=max_path_length)
+    replay_buffer = SimpleReplayBuffer(
+        env_spec=env.spec,
+        size_in_transitions=int(5e4),
+        time_horizon=max_path_length)
 
     qf = DiscreteCNNQFunction(
-        env_spec=env.spec, filter_dims=(8, 4, 3), num_filters=(32, 64, 64), strides=(4, 2, 1), dueling=False)
+        env_spec=env.spec, filter_dims=(8, 4, 3), num_filters=(32, 64, 64), strides=(4, 2, 1),
+        hidden_sizes=(256,))
 
     policy = DiscreteQfDerivedPolicy(env_spec=env, qf=qf)
 
     epilson_greedy_strategy = EpsilonGreedyStrategy(
         env_spec=env.spec,
-        total_step=max_path_length * n_epochs,
+        total_timesteps=n_epochs,
         max_epsilon=1.0,
         min_epsilon=0.02,
         decay_ratio=0.1)
@@ -80,13 +82,13 @@ def run_task(*_):
         target_network_update_freq=2000,
         buffer_batch_size=32)
 
-    algo.train()
+    algo.train(sess)
 
 
-run_experiment(
-    run_task,
-    n_parallel=1,
-    snapshot_mode="last",
-    seed=1,
-    plot=False,
-)
+# run_experiment(
+#     run_task,
+#     n_parallel=1,
+#     snapshot_mode="last",
+#     seed=1,
+#     plot=False,
+# )

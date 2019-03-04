@@ -4,7 +4,6 @@ import tensorflow as tf
 
 
 def cnn(input_var,
-        output_dim,
         filter_dims,
         num_filters,
         strides,
@@ -21,7 +20,6 @@ def cnn(input_var,
 
     Args:
         input_var: Input tf.Tensor to the CNN.
-        output_dim: Dimension of the network output.
         filter_dims: Dimension of the filters.
         num_filters: Number of filters.
         strides: The stride of the sliding window.
@@ -54,22 +52,11 @@ def cnn(input_var,
                 h = hidden_nonlinearity(h)
 
         # convert conv to dense
-        # dim = tf.reduce_prod(h.get_shape()[1:].as_list())
-        dim = np.prod(h.get_shape()[1:].as_list())
-        h = tf.reshape(h, [-1, dim])
-        h = tf.layers.dense(
-            inputs=h,
-            units=output_dim,
-            activation=output_nonlinearity,
-            kernel_initializer=output_w_init,
-            bias_initializer=output_b_init,
-            name="output")
-
-        return h
+        dim = tf.reduce_prod(h.get_shape()[1:].as_list())
+        return tf.reshape(h, [-1, dim.eval()])
 
 
 def cnn_with_max_pooling(input_var,
-                         output_dim,
                          filter_dims,
                          num_filters,
                          stride,
@@ -88,7 +75,6 @@ def cnn_with_max_pooling(input_var,
 
     Args:
         input_var: Input tf.Tensor to the CNN.
-        output_dim: Dimension of the network output.
         filter_dims: Dimension of the filters.
         num_filters: Number of filters.
         stride: The stride of the sliding window.
@@ -128,18 +114,8 @@ def cnn_with_max_pooling(input_var,
                 h, ksize=pool_shapes, strides=pool_strides, padding=padding)
 
         # convert conv to dense
-        # dim = tf.reduce_prod(h.get_shape()[1:].as_list())
-        dim = np.prod(h.get_shape()[1:].as_list())
-        h = tf.reshape(h, [-1, dim])
-        h = tf.layers.dense(
-            inputs=h,
-            units=output_dim,
-            activation=output_nonlinearity,
-            kernel_initializer=output_w_init,
-            bias_initializer=output_b_init,
-            name="output")
-
-        return h
+        dim = tf.reduce_prod(h.get_shape()[1:].as_list())
+        return tf.reshape(h, [-1, dim.eval()])
 
 
 def _conv(input_var,
