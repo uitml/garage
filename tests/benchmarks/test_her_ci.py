@@ -3,8 +3,8 @@ import datetime
 import os.path as osp
 import random
 import unittest
-import shutil
 import json
+import shutil
 import os
 
 from baselines.bench import benchmarks
@@ -12,7 +12,6 @@ from baselines.her.experiment.config import CACHED_ENVS
 from baselines.her.experiment.config import DEFAULT_PARAMS as BASELINES_PARAMS
 from baselines.her.experiment.train import launch
 import gym
-import matplotlib.pyplot as plt
 import pandas as pd
 import tensorflow as tf
 
@@ -55,14 +54,12 @@ class TestBenchmarkHER(unittest.TestCase):
         benchmark_dir = "./data/local/benchmark_her/%s/" % timestamp
 
         latest_dir = "./latest_results"
-        latest_result = latest_dir + "/her_progress.json"
         result_json = {}
         result_json["time_start"] = timestamp
 
         if osp.exists(latest_dir):
             shutil.rmtree(latest_dir)
         os.makedirs(latest_dir)
-        result_file = open(latest_result, "w")
 
         for task in mujoco1m["tasks"]:
             env_id = task["env_id"]
@@ -70,8 +67,6 @@ class TestBenchmarkHER(unittest.TestCase):
             seeds = random.sample(range(100), task["trials"])
 
             task_dir = osp.join(benchmark_dir, env_id)
-            plt_file = osp.join(benchmark_dir,
-                                "{}_benchmark.png".format(env_id))
             baselines_csvs = []
             garage_csvs = []
 
@@ -105,7 +100,8 @@ class TestBenchmarkHER(unittest.TestCase):
                 factor=6400)
 
         write_file(json.dumps(result_json), "DDPG")
-    test_json.huge = True
+
+    test_benchmark_her.huge = True
 
 
 def run_garage(env, seed, log_dir):
@@ -193,7 +189,7 @@ def run_baselines(env_id, seed, log_dir):
     :param log_dir: Log dir path.
     :return
     """
-    with tf.Session() as sess:
+    with tf.Session():
         launch_params = {
             "env": env_id,
             "logdir": log_dir,
@@ -211,8 +207,6 @@ def run_baselines(env_id, seed, log_dir):
 
 
 def write_file(result_json, algo):
-    #if results file does not exist, create it.
-    #else: load file and append to it.
     latest_dir = "./latest_results"
     latest_result = latest_dir + "/progress.json"
     res = {}
@@ -223,12 +217,11 @@ def write_file(result_json, algo):
     res[algo] = result_json
     result_file = open(latest_result, "w")
     result_file.write(json.dumps(res))
-    
-    
+
+
 def create_json(b_csvs, g_csvs, trails, seeds, b_x, b_y, g_x, g_y, factor):
     task_result = {}
     for trail in range(trails):
-        #convert epochs vs AverageReturn into time_steps vs AverageReturn
         g_res, b_res = {}, {}
         trail_seed = "trail_%d" % (trail + 1)
         task_result["seed"] = seeds[trail]
@@ -236,11 +229,11 @@ def create_json(b_csvs, g_csvs, trails, seeds, b_x, b_y, g_x, g_y, factor):
         df_g = json.loads(pd.read_csv(g_csvs[trail]).to_json())
         df_b = json.loads(pd.read_csv(b_csvs[trail]).to_json())
 
-        g_res["time_steps"] = list(map( lambda x: float(x)*factor , df_g[g_x] ))
-        g_res["return"] =  df_g[g_y] 
+        g_res["time_steps"] = list(map(lambda x: float(x) * factor, df_g[g_x]))
+        g_res["return"] = df_g[g_y]
 
-        b_res["time_steps"] = list(map( lambda x: float(x)*factor , df_b[b_x] ))
-        b_res["return"] =  df_b[b_y]
+        b_res["time_steps"] = list(map(lambda x: float(x) * factor, df_b[b_x]))
+        b_res["return"] = df_b[b_y]
 
         task_result[trail_seed]["garage"] = g_res
         task_result[trail_seed]["baselines"] = b_res

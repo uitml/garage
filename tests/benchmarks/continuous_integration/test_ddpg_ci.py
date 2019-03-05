@@ -11,7 +11,6 @@ import datetime
 import os.path as osp
 import os
 import random
-import shutil
 import unittest
 import json
 
@@ -24,7 +23,6 @@ from baselines.ddpg.noise import OrnsteinUhlenbeckActionNoise
 import baselines.ddpg.training as training
 from baselines.logger import configure
 import gym
-import matplotlib.pyplot as plt
 from mpi4py import MPI
 import numpy as np
 import pandas as pd
@@ -77,8 +75,6 @@ class TestJson(unittest.TestCase):
             seeds = random.sample(range(100), task["trials"])
 
             task_dir = osp.join(benchmark_dir, env_id)
-            plt_file = osp.join(benchmark_dir,
-                                "{}_benchmark.png".format(env_id))
             baselines_csvs = []
             garage_csvs = []
 
@@ -108,7 +104,7 @@ class TestJson(unittest.TestCase):
                 g_y="AverageReturn",
                 b_x="total/epochs",
                 b_y="rollout/return",
-                factor=params["n_epoch_cycles"]*params["n_rollout_steps"]) 
+                factor=params["n_epoch_cycles"] * params["n_rollout_steps"])
 
         write_file(result_json, "DDPG")
 
@@ -246,8 +242,6 @@ def run_baselines(env, seed, log_dir):
 
 
 def write_file(result_json, algo):
-    #if results file does not exist, create it.
-    #else: load file and append to it.
     latest_dir = "./latest_results"
     latest_result = latest_dir + "/progress.json"
     res = {}
@@ -258,12 +252,11 @@ def write_file(result_json, algo):
     res[algo] = result_json
     result_file = open(latest_result, "w")
     result_file.write(json.dumps(res))
-    
-    
+
+
 def create_json(b_csvs, g_csvs, trails, seeds, b_x, b_y, g_x, g_y, factor):
     task_result = {}
     for trail in range(trails):
-        #convert epochs vs AverageReturn into time_steps vs AverageReturn
         g_res, b_res = {}, {}
         trail_seed = "trail_%d" % (trail + 1)
         task_result["seed"] = seeds[trail]
@@ -271,11 +264,11 @@ def create_json(b_csvs, g_csvs, trails, seeds, b_x, b_y, g_x, g_y, factor):
         df_g = json.loads(pd.read_csv(g_csvs[trail]).to_json())
         df_b = json.loads(pd.read_csv(b_csvs[trail]).to_json())
 
-        g_res["time_steps"] = list(map( lambda x: float(x)*factor , df_g[g_x] ))
-        g_res["return"] =  df_g[g_y] 
+        g_res["time_steps"] = list(map(lambda x: float(x) * factor, df_g[g_x]))
+        g_res["return"] = df_g[g_y]
 
-        b_res["time_steps"] = list(map( lambda x: float(x)*factor , df_b[b_x] ))
-        b_res["return"] =  df_b[b_y]
+        b_res["time_steps"] = list(map(lambda x: float(x) * factor, df_b[b_x]))
+        b_res["return"] = df_b[b_y]
 
         task_result[trail_seed]["garage"] = g_res
         task_result[trail_seed]["baselines"] = b_res
