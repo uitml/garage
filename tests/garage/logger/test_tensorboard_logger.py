@@ -51,7 +51,7 @@ class TestTensorBoardLogger(unittest.TestCase):
             sess.__enter__()
 
             logger.log(tabular)
-            tb_output.dump()
+            logger.dump_all()
 
         finally:
             logger.remove_all()
