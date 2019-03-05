@@ -14,6 +14,7 @@ from garage.tf.algos import DQN
 from garage.tf.envs import TfEnv
 from garage.tf.policies import DiscreteQfDerivedPolicy
 from garage.tf.q_functions import DiscreteMLPQFunction
+from garage.tf.q_functions.discrete_mlp_q_function_2 import DiscreteMLPQFunction2
 
 import tensorflow as tf
 
@@ -57,7 +58,7 @@ with tf.Session() as sess:
         n_train_steps=1,
         smooth_return=False,
         double_q=False,
-        target_network_update_freq=1000,
+        target_network_update_freq=100,
         buffer_batch_size=32)
 
     algo.train(sess)

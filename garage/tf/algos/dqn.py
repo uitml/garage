@@ -51,6 +51,9 @@ class DQN(OffPolicyRLAlgorithm):
         obs_dim = self.env.observation_space.shape
         action_dim = self.env.action_space.n
 
+        self.obs_input = self.qf.model.networks['default'].input
+        self.q_val = self.qf.model.networks['default'].output
+
         # build q networks
         with tf.name_scope(self.name, "DQN"):
             self.action_t_ph = tf.placeholder(tf.int32, None, name="action")
@@ -70,7 +73,7 @@ class DQN(OffPolicyRLAlgorithm):
             with tf.name_scope("td_error"):
                 # Q-value of the selected action
                 q_selected = tf.reduce_sum(
-                    self.qf.model.networks['default'].output * tf.one_hot(self.action_t_ph, action_dim),
+                    self.q_val * tf.one_hot(self.action_t_ph, action_dim),
                     axis=1)
 
                 # r + Q'(s', argmax_a(Q(s', _)) - Q(s, a)
@@ -218,7 +221,7 @@ class DQN(OffPolicyRLAlgorithm):
         loss, _ = self.sess.run(
             [self._loss, self._optimize_loss],
             feed_dict={
-                self.qf.model.networks['default'].input: observations,
+                self.obs_input: observations,
                 self.action_t_ph: actions,
                 self.reward_t_ph: rewards,
                 self.done_t_ph: dones,
