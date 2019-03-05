@@ -62,7 +62,7 @@ class DiscreteMLPQFunction(QFunction):
 
         obs_ph = tf.placeholder(tf.float32, (None, ) + obs_dim, name="obs")
 
-        self.model.build(obs_ph)
+        self.q_val = self.model.build(obs_ph)
 
     def build_net(self, input_var, name):
         model = DiscreteMLPModel(

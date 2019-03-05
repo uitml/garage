@@ -27,8 +27,8 @@ class DiscreteQfDerivedPolicy(Policy, Serializable):
 
         assert isinstance(env_spec.action_space, Discrete)
         self._env_spec = env_spec
+        self._qf = qf
         self._input = qf.model.networks['default'].input
-        self._output = qf.model.networks['default'].output
 
     @property
     def vectorized(self):
@@ -50,7 +50,7 @@ class DiscreteQfDerivedPolicy(Policy, Serializable):
         """
         sess = tf.get_default_session()
         q_vals = sess.run(
-            self._output, feed_dict={self._input: [observation]})
+            self._qf.q_val, feed_dict={self._input: [observation]})
         opt_action = np.argmax(q_vals)
 
         return opt_action, dict()
@@ -70,7 +70,7 @@ class DiscreteQfDerivedPolicy(Policy, Serializable):
         """
         sess = tf.get_default_session()
         q_vals = sess.run(
-            self._output, feed_dict={self._input: observations})
+            self._qf.q_val, feed_dict={self._input: observations})
         opt_actions = np.argmax(q_vals, axis=1)
 
         return opt_actions, dict()

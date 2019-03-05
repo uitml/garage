@@ -58,7 +58,7 @@ with tf.Session() as sess:
         n_train_steps=1,
         smooth_return=False,
         double_q=False,
-        target_network_update_freq=100,
+        target_network_update_freq=1000,
         buffer_batch_size=32)
 
     algo.train(sess)
