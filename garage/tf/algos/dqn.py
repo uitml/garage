@@ -77,7 +77,7 @@ class DQN(OffPolicyRLAlgorithm):
 
                 # r + Q'(s', argmax_a(Q(s', _)) - Q(s, a)
                 if self.double_q:
-                    target_qval_with_online_q = self.qf.get_qval_sym(self.qf.name, self.next_obs_t_ph)
+                    target_qval_with_online_q = self.qf.get_qval_sym(self.next_obs_t_ph, self.qf.name)
                     future_best_q_val_action = tf.argmax(target_qval_with_online_q, 1)
                     future_best_q_val = tf.reduce_sum(self.target_qval * tf.one_hot(future_best_q_val_action, action_dim),
                         axis=1)

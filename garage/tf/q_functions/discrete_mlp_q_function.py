@@ -71,6 +71,7 @@ class DiscreteMLPQFunction(QFunction):
             hidden_sizes=self._hidden_sizes)
 
         return model.build(input_var)
+
     @overrides
     def get_qval_sym(self, state_input, name):
         """
