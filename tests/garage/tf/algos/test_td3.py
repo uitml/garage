@@ -42,7 +42,9 @@ class TestTD3(TfGraphTestCase):
                 hidden_nonlinearity=tf.nn.relu)
 
             replay_buffer = SimpleReplayBuffer(
-                env_spec=env.spec, size_in_transitions=int(1e6), time_horizon=100)
+                env_spec=env.spec,
+                size_in_transitions=int(1e6),
+                time_horizon=100)
 
             algo = TD3(
                 env,

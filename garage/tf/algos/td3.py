@@ -11,11 +11,11 @@ import tensorflow as tf
 import tensorflow.contrib as tc
 
 from garage.misc.overrides import overrides
-from garage.tf.algos.off_policy_rl_algorithm import OffPolicyRLAlgorithm
+from garage.tf.algos import DDPG
 from garage.tf.misc import tensor_utils
 
 
-class TD3(OffPolicyRLAlgorithm):
+class TD3(DDPG):
     """
     Implementation of TD3.
 
@@ -65,24 +65,23 @@ class TD3(OffPolicyRLAlgorithm):
             max_action(float): Maximum action magnitude.
             name(str): Name of the algorithm shown in computation graph.
         """
-        action_bound = env.action_space.high
         self.qf2 = qf2
-        self.max_action = action_bound if max_action is None else max_action
-        self.tau = target_update_tau
-        self.policy_lr = policy_lr
-        self.qf_lr = qf_lr
-        self.policy_weight_decay = policy_weight_decay
-        self.qf_weight_decay = qf_weight_decay
-        self.policy_optimizer = policy_optimizer
-        self.qf_optimizer = qf_optimizer
-        self.name = name
-        self.clip_pos_returns = clip_pos_returns
-        self.clip_return = clip_return
+
         super(TD3, self).__init__(
             env=env,
             replay_buffer=replay_buffer,
-            use_target=True,
+            target_update_tau=target_update_tau,
+            policy_lr=policy_lr,
+            qf_lr=qf_lr,
+            policy_weight_decay=policy_weight_decay,
+            qf_weight_decay=qf_weight_decay,
+            policy_optimizer=policy_optimizer,
+            qf_optimizer=qf_optimizer,
+            clip_pos_returns=clip_pos_returns,
+            clip_return=clip_return,
             discount=discount,
+            max_action=max_action,
+            name=name,
             **kwargs)
 
     @overrides
@@ -99,13 +98,13 @@ class TD3(OffPolicyRLAlgorithm):
 
             # Set up target init and update functions
             with tf.name_scope("setup_target"):
-                policy_init_ops, policy_update_ops = get_target_ops(
+                policy_init_ops, policy_update_ops = self.get_target_ops(
                     self.policy.get_global_vars(),
                     self.policy.get_global_vars("target_policy"), self.tau)
-                qf_init_ops, qf_update_ops = get_target_ops(
+                qf_init_ops, qf_update_ops = self.get_target_ops(
                     self.qf.get_global_vars(),
                     self.qf.get_global_vars("target_qf"), self.tau)
-                qf2_init_ops, qf2_update_ops = get_target_ops(
+                qf2_init_ops, qf2_update_ops = self.get_target_ops(
                     self.qf2.get_global_vars(),
                     self.qf2.get_global_vars("target_qf2"), self.tau)
                 target_init_op = policy_init_ops + qf_init_ops
@@ -251,20 +250,3 @@ class TD3(OffPolicyRLAlgorithm):
         self.f_update_target2()
 
         return qval_loss, ys, qval, action_loss
-
-    @overrides
-    def get_itr_snapshot(self, itr, samples_data):
-        """Get snapshot of each iteration."""
-        return dict(itr=itr, policy=self.policy, env=self.env)
-
-
-def get_target_ops(variables, target_variables, tau):
-    """Get target network update operations."""
-    update_ops = []
-    init_ops = []
-    assert len(variables) == len(target_variables)
-    for var, target_var in zip(variables, target_variables):
-        init_ops.append(tf.assign(target_var, var))
-        update_ops.append(
-            tf.assign(target_var, tau * var + (1.0 - tau) * target_var))
-    return init_ops, update_ops
