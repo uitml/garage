@@ -4,7 +4,7 @@ from enum import Enum, unique
 import numpy as np
 import tensorflow as tf
 
-from garage.logger import HistogramInput, logger, tabular
+from garage.logger import logger, tabular
 from garage.misc import special
 from garage.misc.overrides import overrides
 from garage.tf.algos import BatchPolopt
@@ -460,7 +460,7 @@ class NPO(BatchPolopt):
         # Calculate explained variance
         ev = special.explained_variance_1d(
             np.concatenate(baselines), aug_returns)
-        logger.record_tabular("Baseline/ExplainedVariance", ev)
+        tabular.record("Baseline/ExplainedVariance", ev)
 
         # Fit baseline
         logger.log("Fitting baseline...")
