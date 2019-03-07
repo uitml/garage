@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import tensorflow as tf
 
+from garage.experiment import LocalRunner
 from garage.exploration_strategies import OUStrategy
 from garage.misc import ext
 from garage.misc import logger as garage_logger
@@ -54,7 +55,7 @@ class TestBenchmarkTD3(unittest.TestCase):
         :return:
         """
         # Load Mujoco1M tasks, you can check other benchmarks here
-        # https://github.com/openai/baselines/blob/master/baselines/bench/benchmarks.py
+        # https://github.com/openai/baselines/blob/master/baselines/bench/benchmarks.py # noqa: E501
         mujoco1m = benchmarks.get_benchmark("Mujoco1M")
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
@@ -107,67 +108,69 @@ def run_garage(env, seed, log_dir):
     ext.set_seed(seed)
 
     with tf.Graph().as_default():
-        env = TfEnv(env)
-        # Set up params for TD3
-        action_noise = OUStrategy(env.spec, sigma=params["sigma"])
+        with LocalRunner() as runner:
+            env = TfEnv(env)
+            # Set up params for TD3
+            action_noise = OUStrategy(env.spec, sigma=params["sigma"])
 
-        policy = ContinuousMLPPolicy(
-            env_spec=env.spec,
-            name="Policy",
-            hidden_sizes=params["policy_hidden_sizes"],
-            hidden_nonlinearity=tf.nn.relu,
-            output_nonlinearity=tf.nn.tanh)
+            policy = ContinuousMLPPolicy(
+                env_spec=env.spec,
+                name="Policy",
+                hidden_sizes=params["policy_hidden_sizes"],
+                hidden_nonlinearity=tf.nn.relu,
+                output_nonlinearity=tf.nn.tanh)
 
-        qf = ContinuousMLPQFunction(
-            name="ContinuousMLPQFunction",
-            env_spec=env.spec,
-            hidden_sizes=params["qf_hidden_sizes"],
-            hidden_nonlinearity=tf.nn.relu)
+            qf = ContinuousMLPQFunction(
+                name="ContinuousMLPQFunction",
+                env_spec=env.spec,
+                hidden_sizes=params["qf_hidden_sizes"],
+                hidden_nonlinearity=tf.nn.relu)
 
-        qf2 = ContinuousMLPQFunction(
-            name="ContinuousMLPQFunction2",
-            env_spec=env.spec,
-            hidden_sizes=params["qf_hidden_sizes"],
-            hidden_nonlinearity=tf.nn.relu)
+            qf2 = ContinuousMLPQFunction(
+                name="ContinuousMLPQFunction2",
+                env_spec=env.spec,
+                hidden_sizes=params["qf_hidden_sizes"],
+                hidden_nonlinearity=tf.nn.relu)
 
-        replay_buffer = SimpleReplayBuffer(
-            env_spec=env.spec,
-            size_in_transitions=params["replay_buffer_size"],
-            time_horizon=params["n_rollout_steps"])
+            replay_buffer = SimpleReplayBuffer(
+                env_spec=env.spec,
+                size_in_transitions=params["replay_buffer_size"],
+                time_horizon=params["n_rollout_steps"])
 
-        td3 = TD3(
-            env,
-            policy=policy,
-            qf=qf,
-            qf2=qf2,
-            replay_buffer=replay_buffer,
-            policy_lr=params["policy_lr"],
-            qf_lr=params["qf_lr"],
-            plot=False,
-            target_update_tau=params["tau"],
-            n_epochs=params["n_epochs"],
-            n_epoch_cycles=params["n_epoch_cycles"],
-            max_path_length=params["n_rollout_steps"],
-            n_train_steps=params["n_train_steps"],
-            discount=params["discount"],
-            smooth_return=params["smooth_return"],
-            min_buffer_size=int(1e4),
-            buffer_batch_size=params["buffer_batch_size"],
-            exploration_strategy=action_noise,
-            policy_optimizer=tf.train.AdamOptimizer,
-            qf_optimizer=tf.train.AdamOptimizer)
+            td3 = TD3(
+                env,
+                policy=policy,
+                qf=qf,
+                qf2=qf2,
+                replay_buffer=replay_buffer,
+                policy_lr=params["policy_lr"],
+                qf_lr=params["qf_lr"],
+                target_update_tau=params["tau"],
+                n_epoch_cycles=params["n_epoch_cycles"],
+                max_path_length=params["n_rollout_steps"],
+                n_train_steps=params["n_train_steps"],
+                discount=params["discount"],
+                smooth_return=params["smooth_return"],
+                min_buffer_size=int(1e4),
+                buffer_batch_size=params["buffer_batch_size"],
+                exploration_strategy=action_noise,
+                policy_optimizer=tf.train.AdamOptimizer,
+                qf_optimizer=tf.train.AdamOptimizer)
 
-        # Set up logger since we are not using run_experiment
-        tabular_log_file = osp.join(log_dir, "progress.csv")
-        tensorboard_log_dir = osp.join(log_dir)
-        garage_logger.add_tabular_output(tabular_log_file)
-        garage_logger.set_tensorboard_dir(tensorboard_log_dir)
+            # Set up logger since we are not using run_experiment
+            tabular_log_file = osp.join(log_dir, "progress.csv")
+            tensorboard_log_dir = osp.join(log_dir)
+            garage_logger.add_tabular_output(tabular_log_file)
+            garage_logger.set_tensorboard_dir(tensorboard_log_dir)
 
-        td3.train()
+            runner.setup(td3, env)
+            runner.train(
+                n_epochs=params['n_epochs'],
+                n_epoch_cycles=params['n_epoch_cycles'])
 
-        garage_logger.remove_tabular_output(tabular_log_file)
+            garage_logger.remove_tabular_output(tabular_log_file)
 
-        return tabular_log_file
+            return tabular_log_file
 
 
 def plot(g_csvs, g_x, g_y, trails, seeds, plt_file, env_id):

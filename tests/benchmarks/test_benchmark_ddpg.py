@@ -159,6 +159,7 @@ def run_garage(env, seed, log_dir):
                 qf_lr=params["qf_lr"],
                 target_update_tau=params["tau"],
                 max_path_length=params["n_rollout_steps"],
+                n_epoch_cycles=params['n_epoch_cycles'],
                 n_train_steps=params["n_train_steps"],
                 discount=params["discount"],
                 min_buffer_size=int(1e4),
