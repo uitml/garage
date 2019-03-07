@@ -50,6 +50,7 @@ def run_task(*_):
             replay_buffer=replay_buffer,
             target_update_tau=1e-2,
             max_path_length=100,
+            n_epoch_cycles=20,
             n_train_steps=50,
             discount=0.9,
             min_buffer_size=int(1e4),

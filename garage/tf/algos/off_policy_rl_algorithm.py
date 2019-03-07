@@ -3,9 +3,12 @@ This module implements a class for off-policy rl algorithms.
 
 Off-policy algorithms such as DQN, DDPG can inherit from it.
 """
+from collections import deque
+
+import numpy as np
+
 from garage.algos import RLAlgorithm
-from garage.tf.samplers import BatchSampler
-from garage.tf.samplers import OffPolicyVectorizedSampler
+from garage.misc.logger import logger
 
 
 class OffPolicyRLAlgorithm(RLAlgorithm):
@@ -17,10 +20,9 @@ class OffPolicyRLAlgorithm(RLAlgorithm):
             policy,
             qf,
             replay_buffer,
+            n_epoch_cycles,
             use_target=False,
             discount=0.99,
-            n_epochs=500,
-            n_epoch_cycles=20,
             max_path_length=100,
             n_train_steps=50,
             buffer_batch_size=64,
@@ -29,11 +31,6 @@ class OffPolicyRLAlgorithm(RLAlgorithm):
             reward_scale=1.,
             input_include_goal=False,
             smooth_return=True,
-            sampler_cls=None,
-            sampler_args=None,
-            force_batch_sampler=False,
-            plot=False,
-            pause_for_plot=False,
             exploration_strategy=None,
     ):
         """Construct an OffPolicyRLAlgorithm class."""
@@ -52,18 +49,16 @@ class OffPolicyRLAlgorithm(RLAlgorithm):
         self.evaluate = False
         self.input_include_goal = input_include_goal
         self.smooth_return = smooth_return
-        if sampler_cls is None:
-            if policy.vectorized and not force_batch_sampler:
-                sampler_cls = OffPolicyVectorizedSampler
-            else:
-                sampler_cls = BatchSampler
-        if sampler_args is None:
-            sampler_args = dict()
-        self.sampler = sampler_cls(self, **sampler_args)
         self.max_path_length = max_path_length
-        self.plot = plot
-        self.pause_for_plot = pause_for_plot
         self.es = exploration_strategy
+
+        self.success_history = deque(maxlen=100)
+        self.episode_rewards = []
+        self.episode_policy_losses = []
+        self.episode_qf_losses = []
+        self.epoch_ys = []
+        self.epoch_qs = []
+
         self.init_opt()
 
     def log_diagnostics(self, paths):
@@ -87,3 +82,61 @@ class OffPolicyRLAlgorithm(RLAlgorithm):
     def optimize_policy(self, itr, samples_data):
         """Optimize policy network."""
         raise NotImplementedError
+
+    def train_once(self, itr, paths):
+        epoch = itr / self.n_epoch_cycles
+
+        self.episode_rewards.extend(paths["undiscounted_returns"])
+        self.success_history.extend(paths["success_history"])
+        last_average_return = np.mean(self.episode_rewards)
+        self.log_diagnostics(paths)
+        for train_itr in range(self.n_train_steps):
+            if self.replay_buffer.n_transitions_stored >= self.min_buffer_size:  # noqa: E501
+                self.evaluate = True
+                qf_loss, y, q, policy_loss = self.optimize_policy(epoch, paths)
+
+                self.episode_policy_losses.append(policy_loss)
+                self.episode_qf_losses.append(qf_loss)
+                self.epoch_ys.append(y)
+                self.epoch_qs.append(q)
+
+        if itr % self.n_epoch_cycles == 0:
+            logger.log("Training finished")
+            logger.log("Saving snapshot #{}".format(epoch))
+            params = self.get_itr_snapshot(epoch, paths)
+            logger.save_itr_params(epoch, params)
+            logger.log("Saved")
+            if self.evaluate:
+                logger.record_tabular('Epoch', epoch)
+                logger.record_tabular('AverageReturn',
+                                      np.mean(self.episode_rewards))
+                logger.record_tabular('StdReturn',
+                                      np.std(self.episode_rewards))
+                logger.record_tabular('Policy/AveragePolicyLoss',
+                                      np.mean(self.episode_policy_losses))
+                logger.record_tabular('QFunction/AverageQFunctionLoss',
+                                      np.mean(self.episode_qf_losses))
+                logger.record_tabular('QFunction/AverageQ',
+                                      np.mean(self.epoch_qs))
+                logger.record_tabular('QFunction/MaxQ', np.max(self.epoch_qs))
+                logger.record_tabular('QFunction/AverageAbsQ',
+                                      np.mean(np.abs(self.epoch_qs)))
+                logger.record_tabular('QFunction/AverageY',
+                                      np.mean(self.epoch_ys))
+                logger.record_tabular('QFunction/MaxY', np.max(self.epoch_ys))
+                logger.record_tabular('QFunction/AverageAbsY',
+                                      np.mean(np.abs(self.epoch_ys)))
+                if self.input_include_goal:
+                    logger.record_tabular('AverageSuccessRate',
+                                          np.mean(self.success_history))
+
+            if not self.smooth_return:
+                self.episode_rewards = []
+                self.episode_policy_losses = []
+                self.episode_qf_losses = []
+                self.epoch_ys = []
+                self.epoch_qs = []
+
+            self.success_history.clear()
+
+        return last_average_return

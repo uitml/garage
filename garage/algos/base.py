@@ -3,5 +3,5 @@ class Algorithm:
 
 
 class RLAlgorithm(Algorithm):
-    def train(self):
+    def train_once(self, itr, paths):
         raise NotImplementedError
