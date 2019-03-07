@@ -1,3 +1,4 @@
+from collections import deque
 import itertools
 import pickle
 
@@ -15,6 +16,7 @@ class OnPolicyVectorizedSampler(BatchSampler):
     def __init__(self, algo, n_envs=None):
         super(OnPolicyVectorizedSampler, self).__init__(algo)
         self.n_envs = n_envs
+        self.ep100rew = deque(maxlen=100)
 
     @overrides
     def start_worker(self):

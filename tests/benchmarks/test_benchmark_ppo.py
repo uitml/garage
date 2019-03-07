@@ -48,6 +48,10 @@ class TestBenchmarkPPO(unittest.TestCase):
         benchmark_dir = "./data/local/benchmark_ppo/%s/" % timestamp
         for task in mujoco1m["tasks"]:
             env_id = task["env_id"]
+
+            if env_id != 'HalfCheetah-v2' and env_id != 'InvertedPendulum-v2':
+                continue
+
             env = gym.make(env_id)
             baseline_env = AutoStopEnv(env_name=env_id)
             seeds = random.sample(range(100), task["trials"])
@@ -58,7 +62,7 @@ class TestBenchmarkPPO(unittest.TestCase):
             baselines_csvs = []
             garage_csvs = []
 
-            for trail in range(task["trials"]):
+            for trail in range(1):
                 env.reset()
                 seed = seeds[trail]
 
@@ -86,7 +90,7 @@ class TestBenchmarkPPO(unittest.TestCase):
                 g_y="AverageReturn",
                 b_x="nupdates",
                 b_y="eprewmean",
-                trails=task["trials"],
+                trails=1,
                 seeds=seeds,
                 plt_file=plt_file,
                 env_id=env_id)
@@ -123,6 +127,7 @@ def run_garage(env, seed, log_dir):
             regressor_args=dict(
                 hidden_sizes=(64, 64),
                 use_trust_region=True,
+                step_size=0.1,
             ),
         )
 
@@ -135,7 +140,7 @@ def run_garage(env, seed, log_dir):
             n_itr=488,
             discount=0.99,
             gae_lambda=0.95,
-            clip_range=0.1,
+            lr_clip_range=0.1,
             policy_ent_coeff=0.0,
             optimizer_args=dict(
                 batch_size=32,
@@ -206,7 +211,7 @@ def run_baselines(env, seed, log_dir):
         ent_coef=0.0,
         lr=3e-4,
         vf_coef=0.5,
-        max_grad_norm=0.5,
+        max_grad_norm=None,
         cliprange=0.1,
         total_timesteps=int(1e6))
 
@@ -252,3 +257,17 @@ def plot(b_csvs, g_csvs, g_x, g_y, b_x, b_y, trails, seeds, plt_file, env_id):
 
     plt.savefig(plt_file)
     plt.close()
+
+
+if __name__ == '__main__':
+    b_csvs = ['/Users/chang/Code/garage/data/local/benchmark_ppo/2019-03-06-18-50-40-654577/InvertedPendulum-v2/trail_1_seed_1/baselines/progress.csv']
+    g_csvs = ['/Users/chang/Code/garage/data/local/benchmark_ppo/2019-03-06-18-50-40-654577/InvertedPendulum-v2/trail_1_seed_1/garage/progress.csv']
+    g_x="Iteration"
+    g_y="AverageReturn"
+    b_x="nupdates"
+    b_y="eprewmean"
+    trails=1
+    seeds=[1]
+    plt_file='/Users/chang/Code/garage/data/local/benchmark_ppo/2019-03-06-18-50-40-654577/InvertedPendulum-v2.png'
+    env_id='InvertedPendulum-v2'
+    plot(b_csvs, g_csvs, g_x, g_y, b_x, b_y, trails, seeds, plt_file, env_id)

@@ -10,6 +10,7 @@ Results:
     RiseTime: itr 250
 """
 import gym
+import tensorflow as tf
 
 from garage.envs import normalize
 from garage.experiment import run_experiment
@@ -26,11 +27,24 @@ def run_task(*_):
     :param _:
     :return:
     """
-    env = TfEnv(normalize(gym.make("InvertedDoublePendulum-v2")))
+    env = TfEnv(normalize(gym.make("HalfCheetah-v2")))
 
-    policy = GaussianMLPPolicy(env_spec=env.spec, hidden_sizes=(64, 64))
+    policy = GaussianMLPPolicy(
+        name="policy",
+        env_spec=env.spec,
+        hidden_sizes=(64, 64),
+        hidden_nonlinearity=tf.nn.tanh,
+        output_nonlinearity=None,
+    )
 
-    baseline = GaussianMLPBaseline(env_spec=env.spec)
+    baseline = GaussianMLPBaseline(
+        env_spec=env.spec,
+        regressor_args=dict(
+            hidden_sizes=(64, 64),
+            use_trust_region=True,
+            step_size=0.1,
+        ),
+    )
 
     algo = PPO(
         env=env,
@@ -40,9 +54,20 @@ def run_task(*_):
         max_path_length=100,
         n_itr=488,
         discount=0.99,
-        lr_clip_range=0.01,
-        optimizer_args=dict(batch_size=32, max_epochs=10),
-        plot=False)
+        gae_lambda=0.95,
+        lr_clip_range=0.1,
+        policy_ent_coeff=0.0,
+        optimizer_args=dict(
+            batch_size=32,
+            max_epochs=10,
+            tf_optimizer_args=dict(
+                learning_rate=3e-4,
+                epsilon=1e-5,
+            ),
+        ),
+        plot=False,
+    )
+
     algo.train()
 
 
@@ -50,6 +75,6 @@ run_experiment(
     run_task,
     n_parallel=1,
     snapshot_mode="last",
-    seed=1,
+    seed=73,
     plot=False,
 )

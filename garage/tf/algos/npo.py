@@ -51,9 +51,9 @@ class NPO(BatchPolopt):
                  name="NPO",
                  policy=None,
                  policy_ent_coeff=0.0,
-                 use_softplus_entropy=True,
-                 use_neg_logli_entropy=True,
-                 stop_entropy_gradient=True,
+                 use_softplus_entropy=False,
+                 use_neg_logli_entropy=False,
+                 stop_entropy_gradient=False,
                  **kwargs):
         self.name = name
         self._name_scope = tf.name_scope(self.name)
@@ -246,7 +246,7 @@ class NPO(BatchPolopt):
         policy_entropy = self._build_entropy_term(i)
 
         with tf.name_scope("augmented_rewards"):
-            rewards = i.reward_var + (self.policy_ent_coeff * policy_entropy)
+            rewards = i.reward_var
 
         with tf.name_scope("policy_loss"):
             advantages = compute_advantages(
@@ -369,7 +369,7 @@ class NPO(BatchPolopt):
                 if self.policy.recurrent:
                     loss = -tf.reduce_sum(obj) / tf.reduce_sum(i.valid_var)
                 else:
-                    loss = -tf.reduce_mean(obj)
+                    loss = - (tf.reduce_mean(obj) + self.policy_ent_coeff * tf.reduce_mean(policy_entropy))
 
             # Diagnostic functions
             self.f_policy_kl = tensor_utils.compile_function(
