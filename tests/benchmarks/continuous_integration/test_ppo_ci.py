@@ -6,12 +6,13 @@ until it's done. So you need to change the baselines source code to make it
 stops at length 100.
 """
 import datetime
+import json
 import multiprocessing
-import os.path as osp
 import os
+import os.path as osp
 import random
 import unittest
-import json
+
 
 from baselines import bench
 from baselines import logger as baselines_logger
@@ -86,10 +87,9 @@ class TestBenchmarkPPO(unittest.TestCase):
                 trails=task["trials"],
                 g_x="Iteration",
                 g_y="AverageReturn",
-                b_x="TimestepsSoFar",
+                b_x="nupdates",
                 b_y="eprewmean",
-                factorG=2048,
-                factorB=1)
+                factor=2048)
 
         write_file(result_json, "PPO")
 
@@ -216,6 +216,7 @@ def run_baselines(env, seed, log_dir):
 
 
 def write_file(result_json, algo):
+    """Creates new results file, or appends to existing results file"""
     latest_dir = "./latest_results"
     latest_result = latest_dir + "/progress.json"
     res = {}
@@ -228,8 +229,7 @@ def write_file(result_json, algo):
     result_file.write(json.dumps(res))
 
 
-def create_json(b_csvs, g_csvs, trails, seeds, b_x, b_y, g_x, g_y, factorG,
-                factorB):
+def create_json(b_csvs, g_csvs, trails, seeds, b_x, b_y, g_x, g_y, factor,):
     task_result = {}
     for trail in range(trails):
         g_res, b_res = {}, {}
@@ -240,11 +240,11 @@ def create_json(b_csvs, g_csvs, trails, seeds, b_x, b_y, g_x, g_y, factorG,
         df_b = json.loads(pd.read_csv(b_csvs[trail]).to_json())
 
         g_res["time_steps"] = list(
-            map(lambda x: float(x) * factorG, df_g[g_x]))
+            map(lambda x: float(x) * factor, df_g[g_x]))
         g_res["return"] = df_g[g_y]
 
         b_res["time_steps"] = list(
-            map(lambda x: float(x) * factorB, df_b[b_x]))
+            map(lambda x: float(x) * factor, df_b[b_x]))
         b_res["return"] = df_b[b_y]
 
         task_result[trail_seed]["garage"] = g_res

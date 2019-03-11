@@ -81,9 +81,11 @@ class TestBenchmarkPPO(unittest.TestCase):
                 trails=task["trials"],
                 g_x="Iteration",
                 g_y="AverageReturn",
-                b_x="Iter",
-                b_y="EpRewMean",
-                factor=2048)
+                b_x="TimestepsSoFar",
+                b_y="eprewmean",
+                factor_g=2048,
+                factor_b=1)
+               
 
         write_file(result_json, "TRPO")
 
@@ -199,7 +201,7 @@ def write_file(result_json, algo):
     result_file.write(json.dumps(res))
 
 
-def create_json(b_csvs, g_csvs, trails, seeds, b_x, b_y, g_x, g_y, factor):
+def create_json(b_csvs, g_csvs, trails, seeds, b_x, b_y, g_x, g_y, factor_g, factor_b):
     task_result = {}
     for trail in range(trails):
         g_res, b_res = {}, {}
@@ -209,10 +211,10 @@ def create_json(b_csvs, g_csvs, trails, seeds, b_x, b_y, g_x, g_y, factor):
         df_g = json.loads(pd.read_csv(g_csvs[trail]).to_json())
         df_b = json.loads(pd.read_csv(b_csvs[trail]).to_json())
 
-        g_res["time_steps"] = list(map(lambda x: float(x) * factor, df_g[g_x]))
+        g_res["time_steps"] = list(map(lambda x: float(x) * factor_g, df_g[g_x]))
         g_res["return"] = df_g[g_y]
 
-        b_res["time_steps"] = list(map(lambda x: float(x) * factor, df_b[b_x]))
+        b_res["time_steps"] = list(map(lambda x: float(x) * factor_b, df_b[b_x]))
         b_res["return"] = df_b[b_y]
 
         task_result[trail_seed]["garage"] = g_res
