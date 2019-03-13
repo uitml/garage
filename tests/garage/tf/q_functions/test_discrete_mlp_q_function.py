@@ -4,7 +4,6 @@ import pickle
 import numpy as np
 import tensorflow as tf
 
-from garage.tf.envs import TfEnv
 from garage.tf.q_functions.discrete_mlp_q_function import DiscreteMLPQFunction
 from tests.fixtures import TfGraphTestCase
 from tests.fixtures.envs.dummy import DummyDiscreteEnv
@@ -14,8 +13,8 @@ class TestDiscreteMLPQFunction(TfGraphTestCase):
     def setUp(self):
         super().setUp()
         self.data = np.ones((2, 1))
-        self.env = TfEnv(DummyDiscreteEnv())
-        self.qf = DiscreteMLPQFunction(self.env.spec)
+        self.env = DummyDiscreteEnv()
+        self.qf = DiscreteMLPQFunction(self.env)
 
     def test_discrete_mlp_q_function(self):
         output1 = self.sess.run(
