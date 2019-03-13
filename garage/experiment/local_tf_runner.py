@@ -9,7 +9,7 @@ import time
 import tensorflow as tf
 
 from garage.misc.logger import logger
-from garage.sampler.parallel_sampler import singleton_pool
+from garage.sampler.stateful_pool import singleton_pool
 from garage.tf.algos import BatchPolopt
 from garage.tf.plotter import Plotter
 from garage.tf.samplers import BatchSampler
@@ -127,7 +127,7 @@ class LocalRunner:
 
     def initialize_tf_vars(self):
         """Initialize all uninitialized variables in session."""
-        with tf.name_scope("auto-initialized"):
+        with tf.name_scope("initialize_tf_vars"):
             self.sess.run(
                 tf.variables_initializer([
                     v for v in tf.global_variables()
@@ -172,8 +172,11 @@ class LocalRunner:
             paths: Batch of samples after preprocessed.
 
         """
+        assert self.has_setup
+
         logger.log("Saving snapshot...")
         params = self.algo.get_itr_snapshot(itr)
+        params['env'] = self.env
         if paths:
             params["paths"] = paths
         logger.save_itr_params(itr, params)
