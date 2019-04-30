@@ -11,7 +11,8 @@ def rollout(env,
             max_path_length=np.inf,
             animated=False,
             speedup=1,
-            always_return_paths=False):
+           always_return_paths=False,
+           deterministic=False):
     observations = []
     actions = []
     rewards = []
@@ -24,7 +25,13 @@ def rollout(env,
         env.render()
     while path_length < max_path_length:
         a, agent_info = agent.get_action(o)
-        next_o, r, d, env_info = env.step(a)
+
+        if deterministic == False:
+            action = a
+        else:
+            action = agent_info['mean']
+
+        next_o, r, d, env_info = env.step(action)
         observations.append(env.observation_space.flatten(o))
         rewards.append(r)
         actions.append(env.action_space.flatten(a))
